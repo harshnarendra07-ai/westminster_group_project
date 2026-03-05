@@ -1,0 +1,13 @@
+# Django Database
+db.sqlite3
+
+# Python Cache files (files your computer creates automatically to run faster)
+*.pyc
+__pycache__/
+
+# Virtual Environments (if you or your team use them later)
+venv/
+env/
+
+# Secret Keys and Passwords
+.env
