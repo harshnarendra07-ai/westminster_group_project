@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,7 +67,8 @@
                 <a href="#">Departments</a>
                 <a href="#">Organisation</a>
                 <a href="#">Messages</a>
-                <a href="#" class="text-primary">Schedule</a> <a href="#">Reports</a>
+                <a href="{% url 'schedule' %}" class="text-primary">Schedule</a>
+                <a href="#">Reports</a>
                 <hr>
                 <a href="#">Profile</a>
                 <a href="#" class="text-danger">Logout</a>
