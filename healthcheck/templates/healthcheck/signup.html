@@ -1,0 +1,17 @@
+{% extends 'healthcheck/base.html' %}
+
+{% block content %}
+<h2>Sign Up</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <input name="username" placeholder="Username">
+    <input name="password" type="password" placeholder="Password">
+    <button type="submit">Create Account</button>
+</form>
+
+<p>
+    Already have an account?
+    <a href="{% url 'login' %}">Sign in</a>
+</p>
+{% endblock content %}

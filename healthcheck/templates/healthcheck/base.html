@@ -1,23 +1,26 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SKY Engineering</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <style>
         body {
             background-color: #f8f9fa;
         }
+
         .sidebar {
             height: 100vh;
             background-color: #ffffff;
             border-right: 1px solid #dee2e6;
             padding-top: 20px;
         }
+
         .sidebar a {
             color: #333;
             text-decoration: none;
@@ -25,13 +28,16 @@
             display: block;
             font-weight: 500;
         }
+
         .sidebar a:hover {
             background-color: #f1f3f5;
             color: #0d6efd;
         }
+
         .main-content {
             padding: 20px;
         }
+
         .sky-brand {
             font-weight: bold;
             font-size: 1.5rem;
@@ -39,50 +45,62 @@
         }
     </style>
 </head>
+
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
         <div class="container-fluid">
             <a class="navbar-brand sky-brand" href="/">SKY Engineering</a>
-            
+
             <div class="d-flex align-items-center">
-                <a href="#" class="nav-link me-3">Help</a>
-                <a href="#" class="nav-link me-3">Contact Support</a>
-                
+                <a href="{% url 'help' %}" class="nav-link me-3">Help</a>
+                <a href="{% url 'support' %}" class="nav-link me-3">Contact Support</a>
+
                 {% if user.is_authenticated %}
-                    <span class="text-muted me-3">Welcome, {{ user.username }}</span>
+                <span class="text-muted me-3">Welcome, {{ user.username }}</span>
                 {% else %}
-                    <a href="#" class="btn btn-outline-primary btn-sm">Sign In</a>
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Sign In</a>
                 {% endif %}
+
             </div>
         </div>
     </nav>
 
     <div class="container-fluid">
         <div class="row">
-            
+
             <div class="col-md-2 sidebar">
-                <a href="/">Dashboard</a>
-                <a href="#">Teams</a>
-                <a href="#">Departments</a>
-                <a href="#">Organisation</a>
-                <a href="#">Messages</a>
-                <a href="{% url 'schedule' %}" class="text-primary">Schedule</a>
-                <a href="#">Reports</a>
-                <hr>
-                <a href="#">Profile</a>
-                <a href="#" class="text-danger">Logout</a>
+                <a href="{% url 'dashboard' %}"
+                    class="{% if request.resolver_match.url_name == 'dashboard' %}text-primary{% endif %}">Dashboard</a>
+                <a href="{% url 'team' %}"
+                    class="{% if request.resolver_match.url_name == 'team' %}text-primary{% endif %}">Teams</a>
+                <a href="{% url 'department' %}"
+                    class="{% if request.resolver_match.url_name == 'department' %}text-primary{% endif %}">Departments</a>
+                <a href="{% url 'organisation' %}"
+                    class="{% if request.resolver_match.url_name == 'organisation' %}text-primary{% endif %}">Organisation</a>
+                <a href="{% url 'message' %}"
+                    class="{% if request.resolver_match.url_name == 'message' %}text-primary{% endif %}">Messages</a>
+                <a href="{% url 'schedule' %}"
+                    class="{% if request.resolver_match.url_name == 'schedule' %}text-primary{% endif %}">Schedule</a>
+                <a href="{% url 'report' %}"
+                    class="{% if request.resolver_match.url_name == 'report' %}text-primary{% endif %}">Reports</a>
+                <a href="{% url 'profile' %}"
+                    class="{% if request.resolver_match.url_name == 'profile' %}text-primary{% endif %}">Profile</a>
+                <a href="{% url 'logout' %}" class="text-danger">Logout</a>
             </div>
 
+
+
             <div class="col-md-10 main-content">
-                
+
                 {% block content %}
                 {% endblock content %}
-                
+
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
