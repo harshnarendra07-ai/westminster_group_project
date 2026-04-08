@@ -39,7 +39,7 @@ def logout_view(request):
 def dashboard_view(request):
     return render(request, "healthcheck/dashboard.html")
 
-def team_view(request):
+def teams_view(request):
     return render(request, "healthcheck/team.html")
 
 def department_view(request):

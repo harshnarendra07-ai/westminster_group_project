@@ -5,7 +5,7 @@ from .report_views import report_view
 urlpatterns = [
     path('', views.dashboard_view, name='dashboard'),
 
-    path('teams/', views.team_view, name='team'),
+    path('teams/', views.teams_view, name='team'),
     path('departments/', views.department_view, name='department'),
     path('organisation/', views.organisation_view, name='organisation'),
     path('messages/', views.message_view, name='message'),
