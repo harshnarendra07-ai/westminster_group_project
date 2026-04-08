@@ -53,7 +53,7 @@
             <a class="navbar-brand sky-brand" href="/">SKY Engineering</a>
 
             <div class="d-flex align-items-center">
-                <a href="{% url 'help' %}" class="nav-link me-3">Help</a>
+                <a href="#" class="nav-link me-3">Help</a>
                 <a href="{% url 'support' %}" class="nav-link me-3">Contact Support</a>
 
                 {% if user.is_authenticated %}
@@ -72,7 +72,7 @@
             <div class="col-md-2 sidebar">
                 <a href="{% url 'dashboard' %}"
                     class="{% if request.resolver_match.url_name == 'dashboard' %}text-primary{% endif %}">Dashboard</a>
-                <a href="{% url 'team' %}"
+                <a href="{% url 'teams' %}"
                     class="{% if request.resolver_match.url_name == 'team' %}text-primary{% endif %}">Teams</a>
                 <a href="{% url 'department' %}"
                     class="{% if request.resolver_match.url_name == 'department' %}text-primary{% endif %}">Departments</a>

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Department, Manager, Skill, Team, UserProfile, Dependency, Project, Repository, Meeting, Message, AuditLog, Session, HealthCard, Vote
 
-# Registering all tables 
+
 admin.site.register(Department)
 admin.site.register(Manager)
 admin.site.register(Skill)

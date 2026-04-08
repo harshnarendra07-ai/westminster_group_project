@@ -4,7 +4,7 @@ import django
 import csv
 import glob
 
-# 1. System Setup
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'skyproject.settings')
@@ -14,7 +14,7 @@ from healthcheck.models import Department, Manager, Skill, Team
 from django.contrib.auth.models import User
 
 def force_import_final():
-    # Find the CSV file automatically
+    
     csv_files = glob.glob("*.csv")
     if not csv_files:
         print(" Error: No CSV file found in the folder.")
@@ -23,7 +23,7 @@ def force_import_final():
     file_path = csv_files[0]
     print(f" Found '{file_path}'. Handling Excel encoding...")
 
-    # WE CHANGED THIS LINE: encoding='latin-1' fixes the 0xa0 error
+    
     with open(os.path.join(BASE_DIR, file_path), newline='', encoding='latin-1') as f:
         reader = csv.DictReader(f)
         count = 0
@@ -33,11 +33,11 @@ def force_import_final():
             if not team_name:
                 continue
                 
-            # 1. Get or Create Department
+            # Get or Create Department
             dept_name = row.get('Department', 'General').strip()
             dept, _ = Department.objects.get_or_create(dept_name=dept_name)
 
-            # 2. Get or Create Manager/User
+            # Get or Create Manager/User
             leader = row.get('Team Leader', 'Unknown').strip()
             username = leader.lower().replace(" ", "")[:8]
             user, _ = User.objects.get_or_create(username=username)
@@ -46,7 +46,7 @@ def force_import_final():
                 user.save()
             manager, _ = Manager.objects.get_or_create(user=user)
 
-            # 3. Create/Update Team
+            # Create/Update Team
             team, _ = Team.objects.update_or_create(
                 team_name=team_name,
                 defaults={
@@ -68,7 +68,7 @@ def force_import_final():
             print(f" Imported: {team_name}")
             count += 1
 
-    print(f"\n🎉 DONE! {count} teams are now in your database.")
+    print(f"\n DONE! {count} teams are now in your database.")
 
 if __name__ == '__main__':
     force_import_final()

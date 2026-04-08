@@ -13,12 +13,12 @@ urlpatterns = [
     path('report/', report_view, name='report'),
     path('profile/', views.profile_view, name='profile'),
 
-    ## auth
+    
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),
 
-    ## non critical
+   
     path('help/', views.help_view, name='help'),
     path('support/', views.support_view, name='support'),
 ]

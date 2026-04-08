@@ -1,11 +1,11 @@
 # Django Database
 db.sqlite3
 
-# Python Cache files (files your computer creates automatically to run faster)
+# Python Cache files 
 *.pyc
 __pycache__/
 
-# Virtual Environments (if you or your team use them later)
+# Virtual Environments 
 venv/
 env/
 

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# 1. CORE COMPANY STRUCTURE 
+#  CORE COMPANY STRUCTURE 
 class Department(models.Model):
     dept_name = models.CharField(max_length=255, unique=True)
     dept_head = models.CharField(max_length=255) 
@@ -46,7 +46,7 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.role}"
 
-# 2. PROJECTS, REPOS & DEPENDENCIES 
+# PROJECTS, REPOS & DEPENDENCIES 
 class Dependency(models.Model):
     downstream_team = models.ForeignKey(Team, related_name='depends_on', on_delete=models.CASCADE)
     upstream_team = models.ForeignKey(Team, related_name='supports', on_delete=models.CASCADE)
@@ -60,7 +60,7 @@ class Repository(models.Model):
     repo_url = models.URLField(unique=True)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
 
-# 3. COMMUNICATIONS & LOGS 
+#  COMMUNICATIONS & LOGS 
 class Meeting(models.Model):
     title = models.CharField(max_length=255)
     date_time = models.DateTimeField()
@@ -81,7 +81,7 @@ class AuditLog(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
-# 4. HEALTH CHECK SYSTEM 
+#  HEALTH CHECK SYSTEM 
 class Session(models.Model):
     session_name = models.CharField(max_length=100)
     start_date = models.DateField()

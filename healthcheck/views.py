@@ -3,7 +3,7 @@ from .forms import MeetingForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
-## basic login, signup and logout, build upon it
+
 def login_view(request):
     if request.method == "POST":
         user = authenticate(
@@ -34,7 +34,7 @@ def logout_view(request):
 
 
 
-## each page can have its own dedicated view page if your area becomes too bloated, please refer to report_views to see how if needed.
+
 
 def dashboard_view(request):
     return render(request, "healthcheck/dashboard.html")
@@ -50,6 +50,11 @@ def organisation_view(request):
 
 def message_view(request):
     return render(request, "healthcheck/message.html")
+
+
+
+def report_view(request):
+    return render(request, "healthcheck/report.html")
 
 def schedule_view(request):
     if request.method == "POST":
@@ -70,7 +75,7 @@ def profile_view(request):
 ## none critical pages below
 
 def help_view(request):
-    return render(request, "healthcheck/help.html")
+    return render(request, 'healthcheck/help.html')
 
 def support_view(request):
     return render(request, "healthcheck/support.html")
