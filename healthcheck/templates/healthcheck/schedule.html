@@ -1,13 +1,101 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Schedule a Meeting</h2>
+<div class="container-fluid">
+    
+    <div class="input-group mb-4 shadow-sm mt-3">
+        <input type="text" class="form-control rounded-pill border-primary" placeholder="Search Bar (E.g. Meetings)">
+    </div>
+
+    <h2 class="mb-4">Schedule</h2>
     <hr>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Schedule</button>
-    </form>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h4 class="text-primary mb-3">Upcoming Meetings</h4>
+            {% if meetings %}
+                <div class="list-group shadow-sm" style="max-height: 400px; overflow-y: auto;">
+                    {% for meeting in meetings %}
+                        <div class="list-group-item list-group-item-action mb-2 border rounded">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="mb-1 fw-bold">{{ meeting.title }}</h5>
+                                    <small class="text-muted d-block mb-2">{{ meeting.date_time }}</small>
+                                    <p class="mb-0 text-secondary" style="font-size: 0.85rem;"><strong>Platform:</strong> {{ meeting.platform }} | <strong>Team:</strong> {{ meeting.team }}</p>
+                                </div>
+                                <div class="ms-2 text-end">
+                                    <a href="{% url 'edit_meeting' meeting.pk %}" class="btn btn-sm btn-warning mb-1 w-100">Edit</a>
+                                    <a href="{% url 'delete_meeting' meeting.pk %}" class="btn btn-sm btn-danger w-100" onclick="return confirm('Cancel this meeting?');">Cancel</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">No upcoming meetings right now.</div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 text-success">
+                        {% if editing %}Edit Meeting{% else %}Schedule a Meeting{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div style="font-size: 0.9rem;">
+                            {{ form.as_p }}
+                        </div>
+                        <div class="d-grid mt-3">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                {% if editing %}Save Changes{% else %}Schedule Meeting{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm p-3 border-secondary bg-light">
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="m-0 fw-bold">7-Day Forecast</h5>
+                    
+                    <div class="btn-group btn-group-sm bg-white border rounded">
+                        <a href="?view=today" class="btn btn-outline-secondary {% if current_filter == 'today' %}active{% endif %} fw-bold">Today</a>
+                        <a href="?view=weekly" class="btn btn-outline-secondary {% if current_filter == 'weekly' %}active{% endif %} fw-bold">Weekly</a>
+                        <a href="?view=monthly" class="btn btn-outline-secondary {% if current_filter == 'monthly' %}active{% endif %} fw-bold">Monthly</a>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-2">
+                    {% for day in calendar_days %}
+                    <div style="width: 13.5%;">
+                        <p class="mb-1 text-center fw-bold">{{ day.date_string }} <span class="text-muted fw-normal" style="font-size: 0.8rem;">{{ day.day_number }}</span></p>
+                        
+                        <div class="border rounded bg-white p-1" style="height: 150px; overflow-y: auto;">
+                            
+                            {% for m in day.meetings %}
+                                <div class="bg-primary text-white rounded px-1 mb-1 shadow-sm" style="font-size: 0.75rem; line-height: 1.2; padding-top: 3px; padding-bottom: 3px;">
+                                    <strong>{{ m.date_time|date:"H:i" }}</strong> - {{ m.title }}
+                                </div>
+                            {% empty %}
+                                {% endfor %}
+                            
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock content %}
