@@ -1,7 +1,37 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div>
 
+<div style="padding: 20px;">
+    <h2 style="margin-bottom: 20px;">Dashboard</h2>
+
+    <div style="display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap;">
+
+        <div style="border: 2px solid #f06d2f; border-radius: 10px; padding: 20px; min-width: 250px;">
+            <h3 style="margin: 0;">Total Departments</h3>
+            <p style="font-size: 22px;">{{ total_departments }}</p>
+        </div>
+
+        <div style="border: 2px solid #9b4dff; border-radius: 10px; padding: 20px; min-width: 250px;">
+            <h3 style="margin: 0;">Total Teams</h3>
+            <p style="font-size: 22px;">{{ total_teams }}</p>
+        </div>
+
+    </div>
+
+    <div style="border: 2px solid #9b4dff; border-radius: 10px; padding: 20px;">
+        <h3 style="margin-bottom: 15px;">Upcoming Meetings</h3>
+
+        {% for meeting in meetings %}
+            <div style="border: 1px solid #ccc; border-radius: 20px; padding: 10px; margin-bottom: 10px;">
+                <strong>{{ meeting.title }}</strong><br>
+                {{ meeting.date_time|date:"d M Y H:i" }}
+            </div>
+        {% empty %}
+            <p>No meetings scheduled</p>
+        {% endfor %}
+
+    </div>
 </div>
+
 {% endblock content %}
