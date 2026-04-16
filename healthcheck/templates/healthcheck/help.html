@@ -1,7 +1,23 @@
 {% extends 'healthcheck/base.html' %}
-
 {% block content %}
-<div>
-
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">Help Center</h2>
+    <hr>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">How to Schedule a Meeting</h5>
+                    <p class="card-text text-muted">Navigate to the Schedule page, select your desired date and time, choose the appropriate team, and click "Schedule Meeting". Make sure the date is not in the past.</p>
+                </div>
+            </div>
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">Viewing Reports</h5>
+                    <p class="card-text text-muted">Go to the Reports tab to view interactive charts regarding team distribution. You can also export a CSV spreadsheet of the raw data from there.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock content %}
+{% endblock %}
