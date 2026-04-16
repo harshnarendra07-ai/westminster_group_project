@@ -5,7 +5,7 @@ from .report_views import report_view
 urlpatterns = [
     path('', views.dashboard_view, name='dashboard'),
 
-    path('teams/', views.teams_view, name='team'),
+    path('team/', views.team_view, name='team'),
     path('departments/', views.department_view, name='department'),
     path('organisation/', views.organisation_view, name='organisation'),
     path('messages/', views.message_view, name='message'),
@@ -15,8 +15,8 @@ urlpatterns = [
 
     
     path('login/', views.login_view, name='login'),
-    path('signup/', views.signup_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),
+    path('signup/', views.signup_view, name='signup'),
 
    
     path('help/', views.help_view, name='help'),

@@ -1,17 +1,43 @@
 {% extends 'healthcheck/base.html' %}
-
 {% block content %}
-<h2>Sign Up</h2>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card p-4 text-center shadow-sm" style="width: 100%; max-width: 400px; border-radius: 12px; border: 2px solid #333;">
+        
+        <h1 class="fw-bold mb-0" style="font-size: 3rem; letter-spacing: -2px;">
+            <span style="color: #ff3b3b;">s</span><span style="color: #0d6efd;">k</span><span style="color: #0dcaf0;">y</span>
+        </h1>
+        <h6 class="text-dark fw-bold mb-4">Engineering</h6>
 
-<form method="POST">
-    {% csrf_token %}
-    <input name="username" placeholder="Username">
-    <input name="password" type="password" placeholder="Password">
-    <button type="submit">Create Account</button>
-</form>
+        <form method="POST">
+            {% csrf_token %}
 
-<p>
-    Already have an account?
-    <a href="{% url 'login' %}">Sign in</a>
-</p>
-{% endblock content %}
+            {% if error %}
+            <div class="alert alert-danger py-2 text-center small fw-bold mx-3 mb-3" style="border-radius: 8px;">
+                {{ error }}
+            </div>
+            {% endif %}
+            
+            <div class="mb-3 text-start">
+                <label class="form-label fw-bold small ms-3 text-dark">Email Address / Username:</label>
+                <input type="text" name="username" class="form-control rounded-pill border-secondary" required>
+            </div>
+            
+            <div class="mb-3 text-start">
+                <label class="form-label fw-bold small ms-3 text-dark">Password:</label>
+                <input type="password" name="password" class="form-control rounded-pill border-secondary" required>
+            </div>
+
+            <div class="mb-4 text-start">
+                <label class="form-label fw-bold small ms-3 text-dark">Confirm Password:</label>
+                <input type="password" name="confirm_password" class="form-control rounded-pill border-secondary" required>
+            </div>
+            
+            <button type="submit" class="btn rounded-pill w-100 fw-bold mb-3" style="border: 2px solid #8a2be2; color: #ff3b3b; background-color: transparent;">Sign Up</button>
+        </form>
+        
+        <div class="small fw-bold text-dark">
+            Already have an account? <a href="{% url 'login' %}" class="text-primary text-decoration-none">Sign In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

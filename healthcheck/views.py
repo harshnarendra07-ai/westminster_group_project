@@ -6,6 +6,7 @@ from .forms import MeetingForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from .models import Meeting, Department, Team
+from django.contrib.auth.decorators import login_required
 
 
 # Authentication views
@@ -25,13 +26,24 @@ def login_view(request):
 
 def signup_view(request):
     if request.method == "POST":
-        user = User.objects.create_user(
-            username=request.POST.get("username"),
-            password=request.POST.get("password")
-        )
-        login(request, user)
-        return redirect("dashboard")
+        
+        username_input = request.POST.get("username")
+        password_input = request.POST.get("password")
+        confirm_input = request.POST.get("confirm_password")
 
+        
+        if password_input != confirm_input:
+            return render(request, "healthcheck/signup.html", {"error": "Passwords do not match. Please try again."})
+        try:
+            user = User.objects.create_user(
+                username=username_input,
+                password=password_input
+            )
+            login(request, user)
+            return redirect("dashboard")
+    
+        except Exception:        
+            return render(request, "healthcheck/signup.html", {"error": "That username is already taken."})
     return render(request, "healthcheck/signup.html")
 
 
@@ -70,7 +82,7 @@ def dashboard_view(request):
     return render(request, "healthcheck/dashboard.html", context)
 
 
-def teams_view(request):
+def team_view(request):
     return render(request, "healthcheck/team.html")
 
 
@@ -92,11 +104,14 @@ def report_view(request):
 #------------------------------
 # Shedule view start here;
 # This view handles the meeting scheduling, displaying meetings based on the selected filter (today, weekly, monthly), and rendering the schedule page with the appropriate context.
+@login_required 
 def schedule_view(request):
     if request.method == "POST":
         form = MeetingForm(request.POST)
         if form.is_valid():
-            form.save()
+            new_meeting = form.save(commit=False)          
+            new_meeting.organiser = request.user 
+            new_meeting.save()
             return redirect("schedule")
     else:
         form = MeetingForm()
@@ -149,6 +164,8 @@ def schedule_view(request):
 
 
 # Function to edit an existing meeting
+
+@login_required
 def edit_meeting(request, meeting_id):
     meeting = get_object_or_404(Meeting, pk=meeting_id)
 
@@ -163,7 +180,7 @@ def edit_meeting(request, meeting_id):
     
     return render(request, 'healthcheck/schedule.html', {'form': form, 'editing': True})
 
-
+@login_required
 def delete_meeting(request, meeting_id):
     meet = get_object_or_404(Meeting, pk=meeting_id)
     meet.delete()
