@@ -163,11 +163,11 @@ def schedule_view(request):
     return render(request, "healthcheck/schedule.html", context)
 
 
-# Function to edit an existing meeting
+# Function to edit an existing meeting or delete a meeting. Both functions ensure that only the organiser of the meeting can perform these actions, and they redirect back to the schedule view after completion.
 
-@login_required
+@login_required(login_url='login')
 def edit_meeting(request, meeting_id):
-    meeting = get_object_or_404(Meeting, pk=meeting_id)
+    meeting = get_object_or_404(Meeting, pk=meeting_id, organiser=request.user)
 
     if request.method == "POST":
         form = MeetingForm(request.POST, instance=meeting)
@@ -177,14 +177,15 @@ def edit_meeting(request, meeting_id):
     else:
         form = MeetingForm(instance=meeting)
 
-    
     return render(request, 'healthcheck/schedule.html', {'form': form, 'editing': True})
 
-@login_required
+
+@login_required(login_url='login')
 def delete_meeting(request, meeting_id):
-    meet = get_object_or_404(Meeting, pk=meeting_id)
+    meet = get_object_or_404(Meeting, pk=meeting_id, organiser=request.user)
     meet.delete()
     return redirect('schedule')
+
 #the schedule view ends here;
 #------------------------------
 
