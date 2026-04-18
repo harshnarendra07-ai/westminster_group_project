@@ -10,7 +10,10 @@ from django.contrib.auth.decorators import login_required
 
 
 # Authentication views
+
+
 def login_view(request):
+    
     if request.method == "POST":
         user = authenticate(
             request,
@@ -53,6 +56,7 @@ def logout_view(request):
 
 
 # Views for core pages
+@login_required(login_url='login')
 def dashboard_view(request):
     # get all departments and teams
     departments = Department.objects.all()
@@ -81,30 +85,30 @@ def dashboard_view(request):
 
     return render(request, "healthcheck/dashboard.html", context)
 
-
+@login_required(login_url='login')
 def team_view(request):
     return render(request, "healthcheck/team.html")
 
-
+@login_required(login_url='login')
 def department_view(request):
     return render(request, "healthcheck/department.html")
 
-
+@login_required(login_url='login')
 def organisation_view(request):
     return render(request, "healthcheck/organisation.html")
 
-
+@login_required(login_url='login')
 def message_view(request):
     return render(request, "healthcheck/message.html")
 
-
+@login_required(login_url='login')
 def report_view(request):
     return render(request, "healthcheck/report.html")
 
 #------------------------------
 # Shedule view start here;
 # This view handles the meeting scheduling, displaying meetings based on the selected filter (today, weekly, monthly), and rendering the schedule page with the appropriate context.
-@login_required 
+@login_required(login_url='login') 
 def schedule_view(request):
     if request.method == "POST":
         form = MeetingForm(request.POST)
@@ -189,15 +193,16 @@ def delete_meeting(request, meeting_id):
 #the schedule view ends here;
 #------------------------------
 
-
+@login_required(login_url='login')
 def profile_view(request):
     return render(request, "healthcheck/profile.html")
 
 
 # view for non critical pages
+@login_required(login_url='login')
 def help_view(request):
     return render(request, 'healthcheck/help.html')
 
-
+@login_required(login_url='login')
 def support_view(request):
     return render(request, "healthcheck/support.html") 
