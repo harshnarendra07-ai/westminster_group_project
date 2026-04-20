@@ -165,11 +165,8 @@ def schedule_view(request):
     else:
         form = MeetingForm()
 
-    filter_type = request.GET.get('view', 'all')
-    now = timezone.now()
-    today_start = now.replace(hour=0, minute=0, second=0)
 
-    filter_type = request.GET.get('view', 'weekly') # Default to weekly
+    filter_type = request.GET.get('view', 'weekly') 
     now = timezone.now()
     today_start = now.replace(hour=0, minute=0, second=0)
     
@@ -185,7 +182,16 @@ def schedule_view(request):
         end_date = today_start + datetime.timedelta(days=7)
 
     
-    meetings = Meeting.objects.filter(date_time__range=[today_start, end_date]).order_by('date_time')
+   
+    search_text = request.GET.get('search_query', '')
+
+    meetings = Meeting.objects.filter(date_time__range=[today_start, end_date])
+    
+   
+    if search_text:
+        meetings = meetings.filter(title__icontains=search_text)
+        
+    meetings = meetings.order_by('date_time')
 
     
     calendar_days = []
@@ -225,9 +231,7 @@ def edit_meeting(request, meeting_id):
             return redirect('schedule')
     else:
         form = MeetingForm(instance=meeting)
-
-    return render(request, 'healthcheck/schedule.html', {'form': form, 'editing': True})
-
+    return render(request, 'healthcheck/edit_schedule.html', {'form': form})
 
 @login_required(login_url='login')
 def delete_meeting(request, meeting_id):
