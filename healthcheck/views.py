@@ -7,7 +7,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from .models import Meeting, Department, Team ,Dependency
+from .models import Meeting, Message, Department, Team ,Dependency
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -160,7 +160,66 @@ def organisation_view(request):
 
 @login_required(login_url='login')
 def message_view(request):
-    return render(request, "healthcheck/message.html")
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    teams = Team.objects.all()
+    current_filter = request.GET.get("filter", "inbox")
+    error_message = ""
+    success_message = ""
+
+    # send message
+    if request.method == "POST":
+        team_id = request.POST.get("team")
+        subject = request.POST.get("subject")
+        body = request.POST.get("body")
+
+        if not team_id or not subject or not body:
+            error_message = "Please fill in all fields"
+        else:
+            try:
+                team = Team.objects.get(id=team_id)
+
+                if team.manager and team.manager.user:
+                    receiver_user = team.manager.user
+
+                    Message.objects.create(
+                        subject=subject,
+                        body=body,
+                        status="Sent",
+                        sender=request.user,
+                        receiver=receiver_user
+                    )
+
+                    success_message = "Message sent successfully"
+                    current_filter = "sent"
+                else:
+                    error_message = "This team does not have a manager linked yet"
+
+            except Team.DoesNotExist:
+                error_message = "Selected team was not found"
+
+    # show messages depending on selected box
+    if current_filter == "sent":
+        messages = Message.objects.filter(sender=request.user).order_by("-id")
+    elif current_filter == "draft":
+        messages = Message.objects.filter(sender=request.user, status="Draft").order_by("-id")
+    elif current_filter == "new":
+        messages = Message.objects.none()
+    else:
+        messages = Message.objects.filter(receiver=request.user).order_by("-id")
+
+    context = {
+        "teams": teams,
+        "messages": messages,
+        "current_filter": current_filter,
+        "user_name": request.user.username,
+        "user_email": request.user.email,
+        "error_message": error_message,
+        "success_message": success_message,
+    }
+
+    return render(request, "healthcheck/message.html", context)
 
 @login_required(login_url='login')
 def report_view(request):
