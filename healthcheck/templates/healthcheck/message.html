@@ -2,6 +2,122 @@
 
 {% block content %}
 <div>
+    style="padding: 20px; max-width: 980px;">
+    <h2 style="margin-bottom: 20px;">Messages</h2>
 
+    <div style="display: flex; gap: 20px; align-items: flex-start;">
+
+        <!-- left box -->
+        <div style="width: 220px; border: 2px solid #cfcfcf; border-radius: 10px; padding: 18px; min-height: 320px;">
+
+            <div style="margin-bottom: 10px;">
+                <a href="?filter=new" style="text-decoration: none; color: inherit;">
+                    <input type="checkbox" {% if current_filter == "new" %}checked{% endif %}>
+                    New Message
+                </a>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <a href="?filter=inbox" style="text-decoration: none; color: inherit;">
+                    <input type="checkbox" {% if current_filter == "inbox" %}checked{% endif %}>
+                    Inbox
+                </a>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <a href="?filter=sent" style="text-decoration: none; color: inherit;">
+                    <input type="checkbox" {% if current_filter == "sent" %}checked{% endif %}>
+                    Sent
+                </a>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <a href="?filter=draft" style="text-decoration: none; color: inherit;">
+                    <input type="checkbox" {% if current_filter == "draft" %}checked{% endif %}>
+                    Drafts
+                </a>
+            </div>
+
+            <!-- message list -->
+            <div style="margin-top: 20px;">
+                {% for msg in messages %}
+                    <div style="border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                        <strong>{{ msg.subject }}</strong><br>
+                        <small>Status: {{ msg.status }}</small><br>
+                        <small>
+                            {% if current_filter == "sent" %}
+                                To: {{ msg.receiver.username }}
+                            {% else %}
+                                From: {{ msg.sender.username }}
+                            {% endif %}
+                        </small>
+                    </div>
+                {% empty %}
+                    <p style="margin: 0;">No messages found</p>
+                {% endfor %}
+            </div>
+
+        </div>
+
+        <!-- right box -->
+        <div style="width: 430px; border: 2px solid #cfcfcf; border-radius: 10px; padding: 18px;">
+
+            {% if error_message %}
+                <p style="color: #ff6b6b; margin-bottom: 15px;">{{ error_message }}</p>
+            {% endif %}
+
+            {% if success_message %}
+                <p style="color: #7CFC00; margin-bottom: 15px;">{{ success_message }}</p>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- select team -->
+                <div style="margin-bottom: 15px;">
+                    <label><strong>Select Team</strong></label><br>
+                    <select name="team" style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;" required>
+                        <option value="">Select Team</option>
+                        {% for team in teams %}
+                            <option value="{{ team.id }}">{{ team.team_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- your name / email -->
+                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label><strong>Your Name</strong></label><br>
+                        <input type="text" value="{{ user_name }}" readonly style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;">
+                    </div>
+
+                    <div style="flex: 1;">
+                        <label><strong>Your Email</strong></label><br>
+                        <input type="text" value="{{ user_email }}" readonly style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;">
+                    </div>
+                </div>
+
+                <!-- subject -->
+                <div style="margin-bottom: 15px;">
+                    <label><strong>Subject</strong></label><br>
+                    <input type="text" name="subject" style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;" required>
+                </div>
+
+                <!-- message -->
+                <div style="margin-bottom: 15px;">
+                    <label><strong>Message</strong></label><br>
+                    <textarea name="body" style="width: 100%; height: 140px; border: 1px solid #ccc; padding: 10px; margin-top: 6px; resize: none;" required></textarea>
+                </div>
+
+                <!-- send button -->
+                <button type="submit" style="padding: 10px 20px; border: none; border-radius: 20px; background-color: #7c4dff; color: white; cursor: pointer;">
+                    Send
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+    
 </div>
 {% endblock content %}
