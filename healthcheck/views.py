@@ -7,6 +7,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from .models import Meeting, Department, Team
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.core.paginator import Paginator
+from .models import Team
 
 
 # Authentication views
@@ -82,9 +85,30 @@ def dashboard_view(request):
     return render(request, "healthcheck/dashboard.html", context)
 
 
-def team_view(request):
-    return render(request, "healthcheck/team.html")
+from django.shortcuts import render
+from django.db.models import Q
+from .models import Team
 
+def team_view(request):
+    query = request.GET.get("q", "")
+    teams = Team.objects.all()
+
+    if query:
+        teams = teams.filter(
+            Q(team_name__icontains=query) |
+            Q(department__dept_name__icontains=query) |
+            Q(development_focus_area__icontains=query)
+        )
+
+    paginator = Paginator(teams, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)    
+
+    context = {
+        "teams": page_obj,
+        "query": query,
+    }
+    return render(request, "healthcheck/team.html", context)
 
 def department_view(request):
     return render(request, "healthcheck/department.html")
