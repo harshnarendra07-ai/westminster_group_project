@@ -89,13 +89,27 @@ def dashboard_view(request):
     return render(request, "healthcheck/dashboard.html", context)
 
 
-from django.shortcuts import render
-from django.db.models import Q
-from .models import Team
-
 @login_required(login_url='login')
 def team_view(request):
-    return render(request, "healthcheck/team.html")
+    query = request.GET.get("q", "")
+    teams = Team.objects.all()
+
+    if query:
+        teams = teams.filter(
+            Q(team_name__icontains=query) |
+            Q(department__dept_name__icontains=query) |
+            Q(development_focus_area__icontains=query)
+        )
+
+    paginator = Paginator(teams, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)    
+
+    context = {
+        "teams": page_obj,
+        "query": query,
+    }
+    return render(request, "healthcheck/team.html", context)
 
 @login_required(login_url='login')
 def department_view(request):
