@@ -21,13 +21,12 @@ class MeetingForm(forms.ModelForm):
 
     class Meta:
         model = Meeting
-        fields = ['title', 'date_time', 'message', 'platform', 'organiser', 'team'] 
+        fields = ['title', 'date_time', 'message', 'platform', 'team'] 
         
         widgets = {
             'date_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'organiser': forms.Select(attrs={'class': 'form-select'}),
             'team': forms.Select(attrs={'class': 'form-select'}),
             
         }

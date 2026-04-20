@@ -50,8 +50,11 @@
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
         <div class="container-fluid">
-            <a class="navbar-brand sky-brand" href="/">SKY Engineering</a>
-
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <img src="{% static 'healthcheck/images/SkyLogo.png' %}" alt="Sky Engineering Logo" height="40"
+                    class="d-inline-block align-text-top">
+                Sky Engineering
+            </a>
             <div class="d-flex align-items-center">
                 <a href="#" class="nav-link me-3">Help</a>
                 <a href="{% url 'support' %}" class="nav-link me-3">Contact Support</a>
@@ -59,9 +62,9 @@
                 {% if user.is_authenticated %}
                 <span class="text-muted me-3">Welcome, {{ user.username }}</span>
                 {% else %}
-                    {% if request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'signup' %}
-                    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Sign In</a>
-                    {% endif %}
+                {% if request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'signup' %}
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Sign In</a>
+                {% endif %}
                 {% endif %}
 
             </div>
@@ -73,14 +76,22 @@
 
             {% if user.is_authenticated %}
             <div class="col-md-2 sidebar">
-                <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}text-primary{% endif %}">Dashboard</a>
-                <a href="{% url 'team' %}" class="{% if request.resolver_match.url_name == 'team' %}text-primary{% endif %}">Teams</a>
-                <a href="{% url 'department' %}" class="{% if request.resolver_match.url_name == 'department' %}text-primary{% endif %}">Departments</a>
-                <a href="{% url 'organisation' %}" class="{% if request.resolver_match.url_name == 'organisation' %}text-primary{% endif %}">Organisation</a>
-                <a href="{% url 'message' %}" class="{% if request.resolver_match.url_name == 'message' %}text-primary{% endif %}">Messages</a>
-                <a href="{% url 'schedule' %}" class="{% if request.resolver_match.url_name == 'schedule' %}text-primary{% endif %}">Schedule</a>
-                <a href="{% url 'report' %}" class="{% if request.resolver_match.url_name == 'report' %}text-primary{% endif %}">Reports</a>
-                <a href="{% url 'profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}text-primary{% endif %}">Profile</a>
+                <a href="{% url 'dashboard' %}"
+                    class="{% if request.resolver_match.url_name == 'dashboard' %}text-primary{% endif %}">Dashboard</a>
+                <a href="{% url 'team' %}"
+                    class="{% if request.resolver_match.url_name == 'team' %}text-primary{% endif %}">Teams</a>
+                <a href="{% url 'department' %}"
+                    class="{% if request.resolver_match.url_name == 'department' %}text-primary{% endif %}">Departments</a>
+                <a href="{% url 'organisation' %}"
+                    class="{% if request.resolver_match.url_name == 'organisation' %}text-primary{% endif %}">Organisation</a>
+                <a href="{% url 'message' %}"
+                    class="{% if request.resolver_match.url_name == 'message' %}text-primary{% endif %}">Messages</a>
+                <a href="{% url 'schedule' %}"
+                    class="{% if request.resolver_match.url_name == 'schedule' %}text-primary{% endif %}">Schedule</a>
+                <a href="{% url 'report' %}"
+                    class="{% if request.resolver_match.url_name == 'report' %}text-primary{% endif %}">Reports</a>
+                <a href="{% url 'profile' %}"
+                    class="{% if request.resolver_match.url_name == 'profile' %}text-primary{% endif %}">Profile</a>
                 <a href="{% url 'logout' %}" class="text-danger fw-bold">Logout</a>
             </div>
             {% endif %}
@@ -92,7 +103,7 @@
 
         </div>
 
-           
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
