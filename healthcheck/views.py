@@ -13,7 +13,10 @@ from .models import Team
 
 
 # Authentication views
+
+
 def login_view(request):
+    
     if request.method == "POST":
         user = authenticate(
             request,
@@ -56,6 +59,7 @@ def logout_view(request):
 
 
 # Views for core pages
+@login_required(login_url='login')
 def dashboard_view(request):
     # get all departments and teams
     departments = Department.objects.all()
@@ -89,6 +93,7 @@ from django.shortcuts import render
 from django.db.models import Q
 from .models import Team
 
+@login_required(login_url='login')
 def team_view(request):
     query = request.GET.get("q", "")
     teams = Team.objects.all()
@@ -110,25 +115,26 @@ def team_view(request):
     }
     return render(request, "healthcheck/team.html", context)
 
+@login_required(login_url='login')
 def department_view(request):
     return render(request, "healthcheck/department.html")
 
-
+@login_required(login_url='login')
 def organisation_view(request):
     return render(request, "healthcheck/organisation.html")
 
-
+@login_required(login_url='login')
 def message_view(request):
     return render(request, "healthcheck/message.html")
 
-
+@login_required(login_url='login')
 def report_view(request):
     return render(request, "healthcheck/report.html")
 
 #------------------------------
 # Shedule view start here;
 # This view handles the meeting scheduling, displaying meetings based on the selected filter (today, weekly, monthly), and rendering the schedule page with the appropriate context.
-@login_required 
+@login_required(login_url='login') 
 def schedule_view(request):
     if request.method == "POST":
         form = MeetingForm(request.POST)
@@ -140,11 +146,8 @@ def schedule_view(request):
     else:
         form = MeetingForm()
 
-    filter_type = request.GET.get('view', 'all')
-    now = timezone.now()
-    today_start = now.replace(hour=0, minute=0, second=0)
 
-    filter_type = request.GET.get('view', 'weekly') # Default to weekly
+    filter_type = request.GET.get('view', 'weekly') 
     now = timezone.now()
     today_start = now.replace(hour=0, minute=0, second=0)
     
@@ -160,7 +163,16 @@ def schedule_view(request):
         end_date = today_start + datetime.timedelta(days=7)
 
     
-    meetings = Meeting.objects.filter(date_time__range=[today_start, end_date]).order_by('date_time')
+   
+    search_text = request.GET.get('search_query', '')
+
+    meetings = Meeting.objects.filter(date_time__range=[today_start, end_date])
+    
+   
+    if search_text:
+        meetings = meetings.filter(title__icontains=search_text)
+        
+    meetings = meetings.order_by('date_time')
 
     
     calendar_days = []
@@ -187,11 +199,11 @@ def schedule_view(request):
     return render(request, "healthcheck/schedule.html", context)
 
 
-# Function to edit an existing meeting
+# Function to edit an existing meeting or delete a meeting. Both functions ensure that only the organiser of the meeting can perform these actions, and they redirect back to the schedule view after completion.
 
-@login_required
+@login_required(login_url='login')
 def edit_meeting(request, meeting_id):
-    meeting = get_object_or_404(Meeting, pk=meeting_id)
+    meeting = get_object_or_404(Meeting, pk=meeting_id, organiser=request.user)
 
     if request.method == "POST":
         form = MeetingForm(request.POST, instance=meeting)
@@ -200,27 +212,27 @@ def edit_meeting(request, meeting_id):
             return redirect('schedule')
     else:
         form = MeetingForm(instance=meeting)
+    return render(request, 'healthcheck/edit_schedule.html', {'form': form})
 
-    
-    return render(request, 'healthcheck/schedule.html', {'form': form, 'editing': True})
-
-@login_required
+@login_required(login_url='login')
 def delete_meeting(request, meeting_id):
-    meet = get_object_or_404(Meeting, pk=meeting_id)
+    meet = get_object_or_404(Meeting, pk=meeting_id, organiser=request.user)
     meet.delete()
     return redirect('schedule')
+
 #the schedule view ends here;
 #------------------------------
 
-
+@login_required(login_url='login')
 def profile_view(request):
     return render(request, "healthcheck/profile.html")
 
 
 # view for non critical pages
+@login_required(login_url='login')
 def help_view(request):
     return render(request, 'healthcheck/help.html')
 
-
+@login_required(login_url='login')
 def support_view(request):
     return render(request, "healthcheck/support.html") 

@@ -1,7 +1,30 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div>
 
-</div>
-{% endblock content %}
+<h2>Departments</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Leader</th>
+            <th>Teams</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dept in departments %}
+        <tr>
+           <td>{{ dept.dept_name }}</td>
+         <td>{{ dept.dept_head }}</td>
+            <td>{{ dept.team_set.count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">No departments found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
