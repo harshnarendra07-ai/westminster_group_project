@@ -4,7 +4,6 @@ import django
 import csv
 import glob
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'skyproject.settings')
@@ -14,7 +13,6 @@ from healthcheck.models import Department, Manager, Skill, Team
 from django.contrib.auth.models import User
 
 def force_import_final():
-    
     csv_files = glob.glob("*.csv")
     if not csv_files:
         print(" Error: No CSV file found in the folder.")
@@ -23,7 +21,6 @@ def force_import_final():
     file_path = csv_files[0]
     print(f" Found '{file_path}'. Handling Excel encoding...")
 
-    
     with open(os.path.join(BASE_DIR, file_path), newline='', encoding='latin-1') as f:
         reader = csv.DictReader(f)
         count = 0
@@ -33,7 +30,6 @@ def force_import_final():
             if not team_name:
                 continue
                 
-            # Get or Create Department
             dept_name = row.get('Department', 'General').strip()
             dept_head = row.get('Department Head', '').strip()
 
@@ -48,7 +44,6 @@ def force_import_final():
                 dept.save()
 
 
-            # Get or Create Manager/User
             leader = row.get('Team Leader', 'Unknown').strip()
             username = leader.lower().replace(" ", "")[:8]
             user, _ = User.objects.get_or_create(username=username)
@@ -57,17 +52,28 @@ def force_import_final():
                 user.save()
             manager, _ = Manager.objects.get_or_create(user=user)
 
-            # Create/Update Team
+            
+            focus_area = row.get('Development Focus Areas', '').strip()
+            slack = row.get('Slack Channels', '').strip()
+            search_terms = row.get('Wiki Search Terms', '').strip()
+            downstream = row.get('Downstream Dependencies', '').strip()
+            dep_type = row.get('Dependency Type', '').strip()
+            
+
             team, _ = Team.objects.update_or_create(
                 team_name=team_name,
                 defaults={
                     'department': dept,
                     'manager': manager,
-                    'methodology': 'Agile'
+                    'methodology': 'Agile',
+                    'development_focus_area': focus_area,  
+                    'slack_channel': slack,                
+                    'search_keywords': search_terms,
+                    'downstream_dependency': downstream,  
+                    'dependency_type': dep_type           
                 }
             )
             
-            # 4. Handle Skills (Clean out the weird characters)
             skills_str = row.get('Key Skills & Technologies', '')
             if skills_str:
                 for s in skills_str.split(','):
