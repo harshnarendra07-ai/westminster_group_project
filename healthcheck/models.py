@@ -40,7 +40,7 @@ class Team(models.Model):
     
     def __str__(self):
         return self.team_name
-
+    
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50, default='Engineer')

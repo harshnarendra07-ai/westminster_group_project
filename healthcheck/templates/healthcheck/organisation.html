@@ -1,7 +1,460 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div>
+
+<h2>Organisation map</h2>
+
+<p>Total Departments: {{ total_departments }}</p>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+
+    <!-- LEFT SIDE: Buttons -->
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" onclick="showListView()">
+    List View
+</button>
+
+        <button class="btn btn-primary" onclick="showNetworkView()">
+            Network View
+        </button>
+
+        <button class="btn btn-info text-white">
+            Export
+        </button>
+    </div>
+
+    <!-- RIGHT SIDE: Search -->
+    <div style="width: 300px; position: relative;">
+        <input type="text"
+               id="searchFilter"
+               class="form-control"
+               placeholder="Search teams or dependencies..."
+               onkeyup="filterOrganisation()">
+
+        <!-- Optional search icon -->
+        <span style="
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;">
+            🔍
+        </span>
+    </div>
 
 </div>
+
+
+
+<h4>Departments</h4>
+<div id="listView">
+<div class="row">
+
+    <div class="col-md-4">
+        <div class="mb-3">
+
+            <label class="form-label">Department</label>
+            <select id="departmentFilter" class="form-select mb-3" onchange="filterOrganisation()">
+                <option value="all" selected>All Departments</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.dept_name|lower }}">{{ dept.dept_name }}</option>
+                {% endfor %}
+            </select>
+
+            <label class="form-label">Teams</label>
+            <select id="teamFilter" class="form-select mb-3" onchange="filterOrganisation()">
+                <option value="all" selected>All Teams</option>
+                {% for dept in departments %}
+                    {% for team in dept.team_set.all %}
+                        <option value="{{ team.team_name|lower }}">{{ team.team_name }}</option>
+                    {% endfor %}
+                {% endfor %}
+            </select>
+             
+              <label class="form-label">Team Type</label>
+              <select id="teamTypeFilter" class="form-select mb-3" onchange="filterOrganisation()">
+              <option value="all" selected>All Team Types</option>
+       {% for dept in departments %}
+             {% for team in dept.team_set.all %}
+            <option value="{{ team.team_type|lower }}">{{ team.team_type }}</option>
+        {% endfor %}
+    {% endfor %}
+</select>
+
+            <label class="form-label">Dependencies</label>
+            <select id="dependencyFilter" class="form-select mb-3" onchange="filterOrganisation()">
+                <option value="all" selected>All Dependencies</option>
+                <option value="upstream">Has Upstream Dependencies</option>
+                <option value="downstream">Has Downstream Dependencies</option>
+                <option value="none">No Dependencies</option>
+            </select>
+
+            <button class="btn btn-success" onclick="toggleDepartments()">
+                View all Departments
+            </button>
+
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div id="departmentsSection" style="display: block;">
+            <ul class="list-group">
+        {% for dept in departments %}
+            <li class="list-group-item department-item"
+                data-department="{{ dept.dept_name|lower }}">
+
+                <button class="btn btn-outline-primary w-100 text-start"
+                    onclick="toggleTeams({{ dept.id }})">
+                    {{ dept.dept_name }}
+                    (Leader: {{ dept.dept_head }})
+                    - {{ dept.team_set.count }} teams
+                </button>
+<ul id="teams-{{ dept.id }}" style="display: none; margin-top: 10px; padding-left: 20px;">
+    {% for team in dept.team_set.all %}
+        <li class="team-item"
+          data-team="{{ team.team_name|lower }}"
+         data-teamtype="{{ team.team_type|lower }}">
+         <strong>{{ team.team_name }}</strong>
+
+            <div style="margin-left: 15px; margin-top: 5px;">
+                <small><strong>Team Type:</strong> {{ team.team_type }}</small><br>
+                <small><strong>Specialisation:</strong> {{ team.development_focus_area }}</small>
+                <ul>
+                    {% for dep in team.depends_on.all %}
+                        <li>{{ dep.upstream_team.team_name }}</li>
+                    {% empty %}
+                        <li>No upstream dependencies</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div style="margin-left: 15px;">
+                <small><strong>Downstream Dependencies:</strong></small>
+                <ul>
+                    {% for dep in team.supports.all %}
+                        <li>{{ dep.downstream_team.team_name }}</li>
+                    {% empty %}
+                        <li>No downstream dependencies</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </li>
+    {% empty %}
+        <li>No teams in this department</li>
+    {% endfor %}
+</ul>
+</li>
+        {% empty %}
+            <li class="list-group-item">No departments found</li>
+        {% endfor %}
+       </ul>
+        </div>
+    </div>
+</div>
+</div>
+
+<div id="networkView" style="display: none; margin-top: 15px;">
+
+    <div id="graphLegend" class="mb-3 d-flex flex-wrap gap-3 p-2"
+         style="background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px;">
+    </div>
+
+    <svg id="networkGraph" width="100%" height="500"
+         style="border: 1px solid #dcdcdc; background: #fcfcfc; border-radius: 8px;">
+    </svg>
+
+</div>
+
 {% endblock content %}
+
+{% block scripts %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+function toggleDepartments() {
+    var section = document.getElementById("departmentsSection");
+    var button = document.querySelector("button.btn-success");
+
+    if (section.style.display === "none") {
+        section.style.display = "block";
+        button.textContent = "Hide Departments";
+    } else {
+        section.style.display = "none";
+        button.textContent = "View all Departments";
+    }
+}
+
+function toggleTeams(deptId) {
+    var list = document.getElementById("teams-" + deptId);
+
+    if (list.style.display === "none") {
+        list.style.display = "block";
+    } else {
+        list.style.display = "none";
+    }
+}
+
+function filterOrganisation() {
+    var teamValue = document.getElementById("teamFilter").value;
+    var dependencyValue = document.getElementById("dependencyFilter").value;
+    var deptValue = document.getElementById("departmentFilter").value;
+    var teamTypeValue = document.getElementById("teamTypeFilter").value;
+    var searchValue = document.getElementById("searchFilter").value.toLowerCase();
+
+    var departmentsSection = document.getElementById("departmentsSection");
+    var button = document.querySelector("button.btn-success");
+    var departmentItems = document.querySelectorAll(".department-item");
+
+    departmentsSection.style.display = "block";
+    button.textContent = "Hide Departments";
+
+    departmentItems.forEach(function(deptItem) {
+        var deptName = deptItem.getAttribute("data-department");
+        var teamItems = deptItem.querySelectorAll(".team-item");
+        var teamList = deptItem.querySelector("ul[id^='teams-']");
+        var deptMatch = (deptValue === "all" || deptName === deptValue);
+
+        var hasMatchingTeam = false;
+
+        teamItems.forEach(function(teamItem) {
+            var teamName = teamItem.getAttribute("data-team");
+            var teamTypeName = teamItem.getAttribute("data-teamtype");
+            var teamText = teamItem.innerText.toLowerCase();
+
+            var hasUpstream = !teamText.includes("no upstream dependencies");
+            var hasDownstream = !teamText.includes("no downstream dependencies");
+
+            var teamMatch = (teamValue === "all" || teamName === teamValue);
+            var teamTypeMatch = (teamTypeValue === "all" || teamTypeName === teamTypeValue);
+            var searchMatch = (
+                searchValue === "" ||
+                teamText.includes(searchValue) ||
+                deptName.includes(searchValue) ||
+                teamName.includes(searchValue)
+            );
+
+            var dependencyMatch = false;
+
+            if (dependencyValue === "all") {
+                dependencyMatch = true;
+            } else if (dependencyValue === "upstream") {
+                dependencyMatch = hasUpstream;
+            } else if (dependencyValue === "downstream") {
+                dependencyMatch = hasDownstream;
+            } else if (dependencyValue === "none") {
+                dependencyMatch = !hasUpstream && !hasDownstream;
+            }
+
+            if (teamMatch && teamTypeMatch && dependencyMatch && searchMatch) {
+                teamItem.style.display = "list-item";
+                hasMatchingTeam = true;
+            } else {
+                teamItem.style.display = "none";
+            }
+        });
+
+        if (deptMatch && hasMatchingTeam) {
+            deptItem.style.display = "list-item";
+            teamList.style.display = "block";
+        } else {
+            deptItem.style.display = "none";
+            teamList.style.display = "none";
+        }
+    });
+}
+
+function showListView() {
+    document.getElementById("listView").style.display = "block";
+    document.getElementById("networkView").style.display = "none";
+}
+
+function showNetworkView() {
+    document.getElementById("listView").style.display = "none";
+    document.getElementById("networkView").style.display = "block";
+    drawGraph();
+}
+
+function renderLegend(departments, color) {
+    const legend = document.getElementById("graphLegend");
+    legend.innerHTML = "";
+
+    departments.forEach(function(dept) {
+        const item = document.createElement("div");
+        item.style.display = "flex";
+        item.style.alignItems = "center";
+        item.style.gap = "8px";
+        item.style.fontSize = "14px";
+
+        const dot = document.createElement("span");
+        dot.style.width = "14px";
+        dot.style.height = "14px";
+        dot.style.borderRadius = "50%";
+        dot.style.display = "inline-block";
+        dot.style.backgroundColor = color(dept);
+        dot.style.border = "1px solid #ccc";
+
+        const text = document.createElement("span");
+        text.textContent = dept;
+
+        item.appendChild(dot);
+        item.appendChild(text);
+        legend.appendChild(item);
+    });
+}
+
+function drawGraph() {
+ const allNodes = {{ graph_nodes|safe }};
+ const links = {{ graph_links|safe }};
+
+    const svg = d3.select("#networkGraph");
+    svg.selectAll("*").remove();
+
+    const width = svg.node().clientWidth;
+    const height = svg.node().clientHeight;
+
+    svg.append("circle")
+    .attr("cx", width / 2)
+    .attr("cy", height / 2)
+    .attr("r", Math.min(width, height) * 0.35)
+    .style("fill", "#f1f5f9")
+    .style("opacity", 0.4)
+    .style("pointer-events", "none");
+    
+
+    const linkedIds = new Set();
+    links.forEach(link => {
+        linkedIds.add(Number(link.source));
+        linkedIds.add(Number(link.target));
+    });
+
+    let nodes = allNodes.filter(node => linkedIds.has(Number(node.id)));
+    if (nodes.length === 0) {
+        nodes = allNodes;
+    }
+if (nodes.length === 0) {
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height / 2)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#666")
+        .text("No data available");
+    return; // stops the graph from trying to render
+}
+    const departments = [...new Set(nodes.map(d => d.department))];
+    const color = d3.scaleOrdinal()
+        .domain(departments)
+        .range(d3.schemeTableau10);
+         renderLegend(departments, color);
+    const departmentCenters = {};
+    const radius = Math.min(width, height) * 0.20;
+
+    departments.forEach((dept, i) => {
+        const angle = (2 * Math.PI * i) / departments.length;
+        departmentCenters[dept] = {
+            x: width / 2 + radius * Math.cos(angle),
+            y: height / 2 + radius * Math.sin(angle)
+        };
+    });
+
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links)
+            .id(d => d.id)
+            .distance(60)
+            .strength(1))
+        .force("charge", d3.forceManyBody().strength(-160))
+        .force("collision", d3.forceCollide(20))
+        .force("x", d3.forceX(d => departmentCenters[d.department].x).strength(0.18))
+        .force("y", d3.forceY(d => departmentCenters[d.department].y).strength(0.18))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    const link = svg.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(links)
+        .enter()
+        .append("line")
+        .style("stroke", "#64748b")
+        .style("stroke-width", 2.5)
+        .style("opacity", 1);
+         
+    const node = svg.append("g")
+        .attr("class", "nodes")
+        .selectAll("circle")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("r", 8)
+        .style("fill", d => color(d.department))
+        .style("stroke", "#ffffff")
+        .style("stroke-width", 1.5)
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        );
+
+    node.append("title")
+        .text(d => `${d.name} (${d.department})`);
+
+    const label = svg.append("g")
+        .attr("class", "labels")
+        .selectAll("text")
+        .data(nodes)
+        .enter()
+        .append("text")
+        .text(d => d.name)
+        .attr("font-size", 11)
+        .attr("font-family", "Arial, sans-serif")
+        .attr("dx", 10)
+        .attr("dy", 4)
+        .style("fill", "#333")
+        .style("display", "none");
+
+    node.on("mouseover", function(event, d) {
+        label.filter(l => l.id === d.id).style("display", "block");
+        d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("r", 10);
+    })
+    .on("mouseout", function(event, d) {
+        label.filter(l => l.id === d.id).style("display", "none");
+        d3.select(this)
+            .transition()
+            .duration(150)
+            .attr("r", 8);
+    });
+
+    simulation.on("tick", () => {
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+
+        node
+            .attr("cx", d => d.x = Math.max(30, Math.min(width - 30, d.x)))
+            .attr("cy", d => d.y = Math.max(30, Math.min(height - 30, d.y)));
+
+        label
+            .attr("x", d => d.x + 10)
+            .attr("y", d => d.y + 4);
+    });
+
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+}
+</script>
+{% endblock scripts %}
