@@ -1,7 +1,47 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div>
+<div class="container mt-4">
+    <h2 class="mb-4">My Profile</h2>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Update Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ user_form.as_p }}
+                        <button type="submit" name="update_profile" class="btn btn-primary w-100">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
 
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {% for field in password_form %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+                                <input type="{{ field.field.widget.input_type }}" name="{{ field.html_name }}" class="form-control">
+                                {% if field.help_text %}
+                                    <small class="text-muted d-block mt-1">{{ field.help_text|safe }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" name="change_password" class="btn btn-danger w-100">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock content %}

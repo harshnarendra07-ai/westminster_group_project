@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 import json
 import datetime
-from .forms import MeetingForm
+from .forms import MeetingForm, UserUpdateForm
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from .models import Meeting, Department, Team ,Dependency
@@ -258,7 +260,32 @@ def delete_meeting(request, meeting_id):
 
 @login_required(login_url='login')
 def profile_view(request):
-    return render(request, "healthcheck/profile.html")
+    if request.method == 'POST':
+        if 'update_profile' in request.POST:
+            user_form = UserUpdateForm(request.POST, instance=request.user)
+            password_form = PasswordChangeForm(request.user) 
+            
+            if user_form.is_valid():
+                user_form.save()
+                return redirect('profile')
+                
+        elif 'change_password' in request.POST:
+            user_form = UserUpdateForm(instance=request.user) 
+            password_form = PasswordChangeForm(request.user, request.POST)
+            
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                return redirect('profile')
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        password_form = PasswordChangeForm(request.user)
+
+    context = {
+        'user_form': user_form,
+        'password_form': password_form
+    }
+    return render(request, "healthcheck/profile.html", context)
 
 
 # view for non critical pages
