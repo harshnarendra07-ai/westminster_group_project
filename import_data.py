@@ -35,7 +35,18 @@ def force_import_final():
                 
             # Get or Create Department
             dept_name = row.get('Department', 'General').strip()
-            dept, _ = Department.objects.get_or_create(dept_name=dept_name)
+            dept_head = row.get('Department Head', '').strip()
+
+
+            dept, created = Department.objects.get_or_create(
+                dept_name=dept_name,
+                defaults={'dept_head': dept_head}
+            )
+
+            if not dept.dept_head and dept_head:
+                dept.dept_head = dept_head
+                dept.save()
+
 
             # Get or Create Manager/User
             leader = row.get('Team Leader', 'Unknown').strip()

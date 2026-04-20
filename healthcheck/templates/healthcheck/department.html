@@ -2,29 +2,53 @@
 
 {% block content %}
 
-<h2>Departments</h2>
+<div class="container mt-4">
+    <h2 class="mb-4">Departments</h2>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Leader</th>
-            <th>Teams</th>
-        </tr>
-    </thead>
-    <tbody>
+    <div class="row g-4">
         {% for dept in departments %}
-        <tr>
-           <td>{{ dept.dept_name }}</td>
-         <td>{{ dept.dept_head }}</td>
-            <td>{{ dept.team_set.count }}</td>
-        </tr>
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+
+                    <h5 class="card-title mb-3">{{ dept.dept_name }}</h5>
+
+                    <p class="mb-2">
+                        <strong>Leader:</strong>
+                        <span class="text-muted">{{ dept.dept_head }}</span>
+                    </p>
+
+                    <p class="mb-3">
+                        <strong>Total Teams:</strong>
+                        <span class="badge bg-dark">{{ dept.team_set.count }}</span>
+                    </p>
+
+                    <hr>
+
+                    <h6 class="mb-3">Teams</h6>
+
+                    <div style="max-height: 220px; overflow-y: auto;">
+                        {% for team in dept.team_set.all %}
+                            <div class="border rounded p-2 mb-2">
+                                <div class="fw-semibold">{{ team.team_name }}</div>
+
+                                <div class="mt-1">
+                                    <span class="badge bg-primary">{{ team.team_type }}</span>
+                                    <span class="badge bg-secondary">{{ team.development_focus_area }}</span>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-muted">No teams in this department</div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
         {% empty %}
-        <tr>
-            <td colspan="3">No departments found</td>
-        </tr>
+            <p>No departments found</p>
         {% endfor %}
-    </tbody>
-</table>
+    </div>
+</div>
 
 {% endblock %}

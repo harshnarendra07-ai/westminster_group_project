@@ -1,11 +1,11 @@
-from django.shortcuts import render, redirect
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+import json
 import datetime
 from .forms import MeetingForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from .models import Meeting, Department, Team
+from .models import Meeting, Department, Team ,Dependency
 from django.contrib.auth.decorators import login_required
 
 
@@ -87,15 +87,60 @@ def dashboard_view(request):
 
 @login_required(login_url='login')
 def team_view(request):
-    return render(request, "healthcheck/team.html")
+    teams = Team.objects.select_related('department', 'manager').all()
+    departments = Department.objects.all()
+
+    context = {
+        'teams': teams,
+        'departments': departments,
+    }
+
+    return render(request, "healthcheck/team.html", context)
 
 @login_required(login_url='login')
 def department_view(request):
-    return render(request, "healthcheck/department.html")
+    departments = Department.objects.prefetch_related('team_set')
+
+    context = {
+        'departments': departments
+    }
+
+    return render(request, "healthcheck/department.html", context)
 
 @login_required(login_url='login')
 def organisation_view(request):
-    return render(request, "healthcheck/organisation.html")
+    departments = Department.objects.prefetch_related(
+        'team_set__depends_on__upstream_team',
+        'team_set__supports__downstream_team'
+    )
+    teams = Team.objects.select_related('department').all()
+    deps = Dependency.objects.select_related('downstream_team', 'upstream_team').all()
+    graph_nodes = []
+    for team in teams:
+        graph_nodes.append({
+            "id": team.id,
+            "name": team.team_name,
+            "department": team.department.dept_name,
+            "team_type": team.team_type,
+        })
+
+    graph_links = []
+    for dep in Dependency.objects.all():
+        graph_links.append({
+            "source": dep.downstream_team.id,
+            "target": dep.upstream_team.id,
+        })
+
+    # Serialize graph_nodes and graph_links as JSON for use in JavaScript in the template
+    context = {
+        'departments': departments,
+        'total_departments': departments.count(),
+        'total_teams': teams.count(),
+        'graph_nodes': json.dumps(graph_nodes),  # Changed: serialize to JSON
+        'graph_links': json.dumps(graph_links),  # Changed: serialize to JSON
+    }
+
+    return render(request, "healthcheck/organisation.html", context)
 
 @login_required(login_url='login')
 def message_view(request):
