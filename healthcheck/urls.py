@@ -4,7 +4,7 @@ from . import views
 from .report_views import report_view
 
 urlpatterns = [
-    path('', RedirectView.as_view(pattern_name='login', permanent=False), name='root'),
+    path('', RedirectView.as_view(pattern_name='dashboard', permanent=False), name='root'),
 
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('team/', views.team_view, name='team'),

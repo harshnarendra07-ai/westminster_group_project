@@ -17,7 +17,9 @@ from django.core.paginator import Paginator
 
 
 def login_view(request):
-    
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+
     if request.method == "POST":
         user = authenticate(
             request,
@@ -250,15 +252,32 @@ def message_view(request):
 # This view handles the meeting scheduling, displaying meetings based on the selected filter (today, weekly, monthly), and rendering the schedule page with the appropriate context.
 @login_required(login_url='login') 
 def schedule_view(request):
+    # 1. Check if the user clicked "Edit" (we will pass 'edit=ID' in the URL)
+    edit_id = request.GET.get('edit')
+    meeting_to_edit = None
+    
+    if edit_id:
+        # Grab the specific meeting they want to edit
+        meeting_to_edit = get_object_or_404(Meeting, pk=edit_id, organiser=request.user)
+
+    # 2. Handle the Form Submission (when they click Save/Schedule)
     if request.method == "POST":
-        form = MeetingForm(request.POST)
+        if meeting_to_edit:
+            # We are saving an EDITED meeting
+            form = MeetingForm(request.POST, instance=meeting_to_edit)
+        else:
+            form = MeetingForm(request.POST)
+            
         if form.is_valid():
             new_meeting = form.save(commit=False)          
             new_meeting.organiser = request.user 
             new_meeting.save()
             return redirect("schedule")
     else:
-        form = MeetingForm()
+        if meeting_to_edit:
+            form = MeetingForm(instance=meeting_to_edit)
+        else:
+            form = MeetingForm()
 
 
     filter_type = request.GET.get('view', 'weekly') 
@@ -307,7 +326,9 @@ def schedule_view(request):
         "form": form,
         "meetings": meetings,
         "current_filter": filter_type,
-        "calendar_days": calendar_days
+        "calendar_days": calendar_days,
+        "editing": True if meeting_to_edit else False,
+        "edit_id": edit_id
     }
 
     return render(request, "healthcheck/schedule.html", context)
