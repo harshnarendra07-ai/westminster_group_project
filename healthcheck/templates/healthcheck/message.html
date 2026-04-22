@@ -1,123 +1,165 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div>
-    style="padding: 20px; max-width: 980px;">
+
+<div style="padding: 20px; max-width: 950px;">
     <h2 style="margin-bottom: 20px;">Messages</h2>
 
     <div style="display: flex; gap: 20px; align-items: flex-start;">
 
-        <!-- left box -->
-        <div style="width: 220px; border: 2px solid #cfcfcf; border-radius: 10px; padding: 18px; min-height: 320px;">
+        <!-- left side -->
+        <div style="width: 220px; border: 2px solid #cfcfcf; border-radius: 10px; padding: 18px; min-height: 300px;">
 
-            <div style="margin-bottom: 10px;">
-                <a href="?filter=new" style="text-decoration: none; color: inherit;">
-                    <input type="checkbox" {% if current_filter == "new" %}checked{% endif %}>
-                    New Message
+            <div style="margin-bottom: 12px;">
+                <a href="?filter=new" style="text-decoration: none; color: inherit; display: block;">
+                    {% if current_filter == "new" %}✔{% else %}☐{% endif %} New Message
                 </a>
             </div>
 
-            <div style="margin-bottom: 10px;">
-                <a href="?filter=inbox" style="text-decoration: none; color: inherit;">
-                    <input type="checkbox" {% if current_filter == "inbox" %}checked{% endif %}>
-                    Inbox
+            <div style="margin-bottom: 12px;">
+                <a href="?filter=inbox" style="text-decoration: none; color: inherit; display: block;">
+                    {% if current_filter == "inbox" %}✔{% else %}☐{% endif %} Inbox
                 </a>
             </div>
 
-            <div style="margin-bottom: 10px;">
-                <a href="?filter=sent" style="text-decoration: none; color: inherit;">
-                    <input type="checkbox" {% if current_filter == "sent" %}checked{% endif %}>
-                    Sent
+            <div style="margin-bottom: 12px;">
+                <a href="?filter=sent" style="text-decoration: none; color: inherit; display: block;">
+                    {% if current_filter == "sent" %}✔{% else %}☐{% endif %} Sent
                 </a>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <a href="?filter=draft" style="text-decoration: none; color: inherit;">
-                    <input type="checkbox" {% if current_filter == "draft" %}checked{% endif %}>
-                    Drafts
+            <div style="margin-bottom: 12px;">
+                <a href="?filter=draft" style="text-decoration: none; color: inherit; display: block;">
+                    {% if current_filter == "draft" %}✔{% else %}☐{% endif %} Drafts
                 </a>
-            </div>
-
-            <!-- message list -->
-            <div style="margin-top: 20px;">
-                {% for msg in messages %}
-                    <div style="border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px;">
-                        <strong>{{ msg.subject }}</strong><br>
-                        <small>Status: {{ msg.status }}</small><br>
-                        <small>
-                            {% if current_filter == "sent" %}
-                                To: {{ msg.receiver.username }}
-                            {% else %}
-                                From: {{ msg.sender.username }}
-                            {% endif %}
-                        </small>
-                    </div>
-                {% empty %}
-                    <p style="margin: 0;">No messages found</p>
-                {% endfor %}
             </div>
 
         </div>
 
-        <!-- right box -->
-        <div style="width: 430px; border: 2px solid #cfcfcf; border-radius: 10px; padding: 18px;">
-
-            {% if error_message %}
-                <p style="color: #ff6b6b; margin-bottom: 15px;">{{ error_message }}</p>
-            {% endif %}
+        <!-- right side -->
+        <div style="flex: 1; border: 2px solid #cfcfcf; border-radius: 10px; padding: 18px; min-height: 300px;">
 
             {% if success_message %}
-                <p style="color: #7CFC00; margin-bottom: 15px;">{{ success_message }}</p>
+                <p style="color: green; margin-bottom: 15px;">{{ success_message }}</p>
             {% endif %}
 
-            <form method="POST">
-                {% csrf_token %}
+            {% if error_message %}
+                <p style="color: red; margin-bottom: 15px;">{{ error_message }}</p>
+            {% endif %}
 
-                <!-- select team -->
-                <div style="margin-bottom: 15px;">
-                    <label><strong>Select Team</strong></label><br>
-                    <select name="team" style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;" required>
-                        <option value="">Select Team</option>
-                        {% for team in teams %}
-                            <option value="{{ team.id }}">{{ team.team_name }}</option>
-                        {% endfor %}
-                    </select>
+            <h3 style="margin-top: 0; margin-bottom: 15px;">
+                {% if current_filter == "sent" %}
+                    Sent Messages
+                {% elif current_filter == "draft" %}
+                    Draft Messages
+                {% elif current_filter == "new" %}
+                    New Message
+                {% else %}
+                    Inbox
+                {% endif %}
+            </h3>
+
+            {% for msg in messages %}
+                <div style="border: 1px solid #ccc; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+                    <strong>{{ msg.subject }}</strong><br>
+                    <p style="margin: 8px 0;">{{ msg.body }}</p>
+
+                    {% if current_filter == "sent" or current_filter == "draft" %}
+                        <small>To: {{ msg.receiver.username }}</small><br>
+                    {% else %}
+                        <small>From: {{ msg.sender.username }}</small><br>
+                    {% endif %}
+
+                    <small>Status: {{ msg.status }}</small>
                 </div>
-
-                <!-- your name / email -->
-                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                    <div style="flex: 1;">
-                        <label><strong>Your Name</strong></label><br>
-                        <input type="text" value="{{ user_name }}" readonly style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;">
-                    </div>
-
-                    <div style="flex: 1;">
-                        <label><strong>Your Email</strong></label><br>
-                        <input type="text" value="{{ user_email }}" readonly style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;">
-                    </div>
-                </div>
-
-                <!-- subject -->
-                <div style="margin-bottom: 15px;">
-                    <label><strong>Subject</strong></label><br>
-                    <input type="text" name="subject" style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;" required>
-                </div>
-
-                <!-- message -->
-                <div style="margin-bottom: 15px;">
-                    <label><strong>Message</strong></label><br>
-                    <textarea name="body" style="width: 100%; height: 140px; border: 1px solid #ccc; padding: 10px; margin-top: 6px; resize: none;" required></textarea>
-                </div>
-
-                <!-- send button -->
-                <button type="submit" style="padding: 10px 20px; border: none; border-radius: 20px; background-color: #7c4dff; color: white; cursor: pointer;">
-                    Send
-                </button>
-            </form>
+            {% empty %}
+                {% if current_filter != "new" %}
+                    <p>No messages found</p>
+                {% endif %}
+            {% endfor %}
 
         </div>
 
     </div>
-    
 </div>
+
+<!-- popup background -->
+<div id="messageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+
+    <!-- popup box -->
+    <div style="background: white; width: 500px; margin: 80px auto; padding: 20px; border-radius: 10px; position: relative;">
+
+        <button type="button" id="closeModal"
+            style="position: absolute; top: 10px; right: 15px; border: none; background: none; font-size: 20px; cursor: pointer;">
+            ×
+        </button>
+
+        <h3 style="margin-top: 0;">New Message</h3>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div style="margin-bottom: 15px;">
+                <label><strong>Select User</strong></label><br>
+                <select name="receiver"
+                        style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;"
+                        required>
+                    <option value="">Select User</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label><strong>Subject</strong></label><br>
+                <input type="text" name="subject"
+                       style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;"
+                       required>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label><strong>Message</strong></label><br>
+                <textarea name="body"
+                          style="width: 100%; height: 140px; border: 1px solid #ccc; padding: 10px; margin-top: 6px; resize: none;"
+                          required></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" name="action_type" value="send"
+                        style="padding: 10px 20px; border: none; border-radius: 20px; background-color: #7c4dff; color: white; cursor: pointer;">
+                    Send
+                </button>
+
+                <button type="submit" name="action_type" value="draft"
+                        style="padding: 10px 20px; border: none; border-radius: 20px; background-color: #999; color: white; cursor: pointer;">
+                    Save Draft
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    const messageModal = document.getElementById("messageModal");
+    const closeModal = document.getElementById("closeModal");
+
+    closeModal.addEventListener("click", function () {
+        messageModal.style.display = "none";
+        window.location.href = "?filter=inbox";
+    });
+
+    window.addEventListener("click", function (event) {
+        if (event.target === messageModal) {
+            messageModal.style.display = "none";
+            window.location.href = "?filter=inbox";
+        }
+    });
+
+    {% if current_filter == "new" or error_message %}
+        messageModal.style.display = "block";
+    {% endif %}
+</script>
+
 {% endblock content %}
