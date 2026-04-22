@@ -7,7 +7,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from .models import Meeting, Department, Team ,Dependency
+from .models import Meeting, Department, Team, Message, Dependency
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -162,11 +162,68 @@ def organisation_view(request):
 
 @login_required(login_url='login')
 def message_view(request):
-    return render(request, "healthcheck/message.html")
+    if not request.user.is_authenticated:
+        return redirect("login")
 
-@login_required(login_url='login')
-def report_view(request):
-    return render(request, "healthcheck/report.html")
+    users = User.objects.exclude(id=request.user.id)
+    current_filter = request.GET.get("filter", "inbox")
+    error_message = ""
+    success_message = request.GET.get("success", "")
+
+    if request.method == "POST":
+        receiver_id = request.POST.get("receiver")
+        subject = request.POST.get("subject")
+        body = request.POST.get("body")
+        action_type = request.POST.get("action_type")
+
+        if not receiver_id or not subject or not body:
+            error_message = "Please fill in all fields"
+            current_filter = "new"
+        else:
+            try:
+                receiver_user = User.objects.get(id=receiver_id)
+
+                if action_type == "draft":
+                    status_value = "Draft"
+                    success_text = "Draft saved successfully"
+                    redirect_filter = "draft"
+                else:
+                    status_value = "Sent"
+                    success_text = "Message sent successfully"
+                    redirect_filter = "sent"
+
+                Message.objects.create(
+                    subject=subject,
+                    body=body,
+                    status=status_value,
+                    sender=request.user,
+                    receiver=receiver_user
+                )
+
+                return redirect(f"/messages?filter={redirect_filter}&success={success_text}")
+
+            except User.DoesNotExist:
+                error_message = "Selected user was not found"
+                current_filter = "new"
+
+    if current_filter == "sent":
+        messages = Message.objects.filter(sender=request.user, status="Sent").order_by("-id")
+    elif current_filter == "draft":
+        messages = Message.objects.filter(sender=request.user, status="Draft").order_by("-id")
+    elif current_filter == "new":
+        messages = Message.objects.none()
+    else:
+        messages = Message.objects.filter(receiver=request.user).order_by("-id")
+
+    context = {
+        "users": users,
+        "messages": messages,
+        "current_filter": current_filter,
+        "error_message": error_message,
+        "success_message": success_message,
+    }
+
+    return render(request, "healthcheck/message.html", context)
 
 #------------------------------
 # Shedule view start here;
