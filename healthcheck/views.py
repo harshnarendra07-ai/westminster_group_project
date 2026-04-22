@@ -9,7 +9,6 @@ from .models import Meeting, Department, Team ,Dependency
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
-from .models import Team
 
 
 # Authentication views
@@ -92,18 +91,21 @@ def dashboard_view(request):
 @login_required(login_url='login')
 def team_view(request):
     query = request.GET.get("q", "")
-    teams = Team.objects.all()
+    teams = Team.objects.select_related('department', 'manager__user').prefetch_related('skills').all()
 
     if query:
         teams = teams.filter(
             Q(team_name__icontains=query) |
             Q(department__dept_name__icontains=query) |
-            Q(development_focus_area__icontains=query)
-        )
+            Q(development_focus_area__icontains=query) |
+            Q(manager__user__username__icontains=query) |
+            Q(manager__user__first_name__icontains=query) |
+            Q(manager__user__last_name__icontains=query)
+        ).distinct()
 
     paginator = Paginator(teams, 8)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)    
+    page_obj = paginator.get_page(page_number)
 
     context = {
         "teams": page_obj,
