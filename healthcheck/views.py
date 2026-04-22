@@ -2,10 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 import json
 import datetime
-from .forms import MeetingForm
+from .forms import MeetingForm, UserUpdateForm
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from .models import Meeting, Department, Team ,Dependency
+from .models import Meeting, Department, Team, Message, Dependency
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -160,11 +162,88 @@ def organisation_view(request):
 
 @login_required(login_url='login')
 def message_view(request):
-    return render(request, "healthcheck/message.html")
+    if not request.user.is_authenticated:
+        return redirect("login")
 
-@login_required(login_url='login')
-def report_view(request):
-    return render(request, "healthcheck/report.html")
+    users = User.objects.exclude(id=request.user.id)
+    current_filter = request.GET.get("filter", "inbox")
+    error_message = ""
+    success_message = request.GET.get("success", "")
+
+    if request.method == "POST":
+        action_type = request.POST.get("action_type")
+
+
+        if action_type == "delete":
+            message_id = request.POST.get("message_id")
+            try:
+                # We use Q to ensure the user is either the sender OR receiver 
+                # before allowing deletion, for security.
+                msg_to_delete = Message.objects.get(
+                    Q(sender=request.user) | Q(receiver=request.user), 
+                    id=message_id
+                )
+                msg_to_delete.delete()
+                
+                # Redirect back to the same tab they were just on with a success message
+                return redirect(f"/messages?filter={current_filter}&success=Message deleted successfully")
+                
+            except Message.DoesNotExist:
+                error_message = "Message not found or you do not have permission to delete it."
+                
+        else:
+            receiver_id = request.POST.get("receiver")
+            subject = request.POST.get("subject")
+            body = request.POST.get("body")
+
+            if not receiver_id or not subject or not body:
+                error_message = "Please fill in all fields"
+                current_filter = "new"
+            else:
+                try:
+                    receiver_user = User.objects.get(id=receiver_id)
+
+                    if action_type == "draft":
+                        status_value = "Draft"
+                        success_text = "Draft saved successfully"
+                        redirect_filter = "draft"
+                    else:
+                        status_value = "Sent"
+                        success_text = "Message sent successfully"
+                        redirect_filter = "sent"
+
+                    Message.objects.create(
+                        subject=subject,
+                        body=body,
+                        status=status_value,
+                        sender=request.user,
+                        receiver=receiver_user
+                    )
+
+                    return redirect(f"/messages?filter={redirect_filter}&success={success_text}")
+
+                except User.DoesNotExist:
+                    error_message = "Selected user was not found"
+                    current_filter = "new"
+
+    if current_filter == "sent":
+        messages = Message.objects.filter(sender=request.user, status="Sent").order_by("-id")
+    elif current_filter == "draft":
+        messages = Message.objects.filter(sender=request.user, status="Draft").order_by("-id")
+    elif current_filter == "new":
+        messages = Message.objects.none()
+    else:
+        messages = Message.objects.filter(receiver=request.user).order_by("-id")
+
+    context = {
+        "users": users,
+        "messages": messages,
+        "current_filter": current_filter,
+        "error_message": error_message,
+        "success_message": success_message,
+    }
+
+    return render(request, "healthcheck/message.html", context)
 
 #------------------------------
 # Shedule view start here;
@@ -260,7 +339,32 @@ def delete_meeting(request, meeting_id):
 
 @login_required(login_url='login')
 def profile_view(request):
-    return render(request, "healthcheck/profile.html")
+    if request.method == 'POST':
+        if 'update_profile' in request.POST:
+            user_form = UserUpdateForm(request.POST, instance=request.user)
+            password_form = PasswordChangeForm(request.user) 
+            
+            if user_form.is_valid():
+                user_form.save()
+                return redirect('profile')
+                
+        elif 'change_password' in request.POST:
+            user_form = UserUpdateForm(instance=request.user) 
+            password_form = PasswordChangeForm(request.user, request.POST)
+            
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)
+                return redirect('profile')
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        password_form = PasswordChangeForm(request.user)
+
+    context = {
+        'user_form': user_form,
+        'password_form': password_form
+    }
+    return render(request, "healthcheck/profile.html", context)
 
 
 # view for non critical pages
