@@ -11,6 +11,7 @@ from .models import Meeting, Department, Team, Message, Dependency
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.contrib import messages
 
 
 # Authentication views
@@ -60,6 +61,9 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
+def help_view(request):
+    return render(request, "healthcheck/help.html")
+
 
 # Views for core pages
 @login_required(login_url='login')
@@ -95,10 +99,16 @@ def dashboard_view(request):
 @login_required(login_url='login')
 def team_view(request):
     query = request.GET.get("q", "")
-    teams = Team.objects.select_related('department', 'manager__user').prefetch_related('skills').all()
+
+    teams_qs = Team.objects.select_related(
+        'department',
+        'manager__user'
+    ).prefetch_related(
+        'skills'
+    ).all()
 
     if query:
-        teams = teams.filter(
+        teams_qs = teams_qs.filter(
             Q(team_name__icontains=query) |
             Q(department__dept_name__icontains=query) |
             Q(development_focus_area__icontains=query) |
@@ -107,14 +117,20 @@ def team_view(request):
             Q(manager__user__last_name__icontains=query)
         ).distinct()
 
-    paginator = Paginator(teams, 8)
+    paginator = Paginator(teams_qs, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    users = User.objects.exclude(id=request.user.id)
+    all_teams = Team.objects.select_related('department', 'manager__user').all()
 
     context = {
         "teams": page_obj,
         "query": query,
+        "users": users,
+        "all_teams": all_teams,
     }
+
     return render(request, "healthcheck/team.html", context)
 
 @login_required(login_url='login')
@@ -399,4 +415,17 @@ def help_view(request):
 
 @login_required(login_url='login')
 def support_view(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        section = request.POST.get("section")
+        issue_type = request.POST.get("issue_type")
+        message_text = request.POST.get("message")
+
+        if name and email and section and issue_type and message_text:
+            messages.success(request, "Your support request has been submitted successfully.")
+            return redirect("support")
+        else:
+            messages.error(request, "Please fill in all fields.")
+
     return render(request, "healthcheck/support.html") 
