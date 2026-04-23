@@ -14,7 +14,7 @@ urlpatterns = [
     path('signup/', views.signup_view, name='signup'),
 
     
-    path('', RedirectView.as_view(pattern_name='login', permanent=False), name='root'),
+    path('', RedirectView.as_view(pattern_name='dashboard', permanent=False), name='root'),
 
     # Core Pages (Team's work)
     path('dashboard/', views.dashboard_view, name='dashboard'), 
