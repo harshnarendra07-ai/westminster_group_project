@@ -6,7 +6,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from .models import Meeting, Department, Team, Message, Dependency
+from .models import Meeting, Department, Team, Message, Dependency, UserProfile
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -80,8 +80,11 @@ def dashboard_view(request):
         team_count = Team.objects.filter(department=dept).count()
         values.append(team_count)
 
-    # get next 3 meetings for dashboard
-    meetings = Meeting.objects.order_by('date_time')[:3]
+    # get next 3 meetings for the user's specific team
+    if hasattr(request.user, 'userprofile') and request.user.userprofile.team:
+        meetings = Meeting.objects.filter(team=request.user.userprofile.team).order_by('date_time')[:3]
+    else:
+        meetings = Meeting.objects.none()
 
     # send data to dashboard page
     context = {
@@ -290,6 +293,23 @@ def schedule_view(request):
             new_meeting = form.save(commit=False)          
             new_meeting.organiser = request.user 
             new_meeting.save()
+            if not meeting_to_edit:
+                team_members = UserProfile.objects.filter(team=new_meeting.team)
+                
+                formatted_date = new_meeting.date_time.strftime('%d/%m/%Y %H:%M')
+                
+                for profile in team_members:
+                    if profile.user != request.user:
+                        Message.objects.create(
+                            subject=f"New Meeting Scheduled: {new_meeting.title}",
+                            body=f"You have been scheduled for a new meeting by {request.user.username}.\n\n"
+                                 f"Date & Time: {formatted_date}\n"
+                                 f"Platform: {new_meeting.platform}\n"
+                                 f"Details: {new_meeting.message}",
+                            status="Sent",
+                            sender=request.user,
+                            receiver=profile.user
+                        )
             return redirect("schedule")
     else:
         if meeting_to_edit:
