@@ -53,10 +53,9 @@
             <a class="navbar-brand" href="{% url 'dashboard' %}">
                 <img src="{% static 'healthcheck/images/SkyLogo.png' %}" alt="Sky Engineering Logo" height="40"
                     class="d-inline-block align-text-top">
-                Sky Engineering
             </a>
             <div class="d-flex align-items-center">
-                <a href="#" class="nav-link me-3">Help</a>
+                <a href="{% url 'help' %}" class="nav-link me-3">Help</a>
                 <a href="{% url 'support' %}" class="nav-link me-3">Contact Support</a>
 
                 {% if user.is_authenticated %}
@@ -107,6 +106,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock scripts %}
 </body>
 
 </html>

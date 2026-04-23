@@ -1,7 +1,180 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div>
 
+<div style="padding: 20px; max-width: 950px;">
+    <h2 style="margin-bottom: 20px;">Messages</h2>
+
+    <div style="display: flex; gap: 20px; align-items: flex-start;">
+
+        <!-- left side -->
+        <div style="width: 220px; border: 2px solid #cfcfcf; border-radius: 10px; padding: 18px; min-height: 300px;">
+
+            <div style="margin-bottom: 12px;">
+                <a href="?filter=new" style="text-decoration: none; color: inherit; display: block;">
+                    {% if current_filter == "new" %}✔{% else %}☐{% endif %} New Message
+                </a>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <a href="?filter=inbox" style="text-decoration: none; color: inherit; display: block;">
+                    {% if current_filter == "inbox" %}✔{% else %}☐{% endif %} Inbox
+                </a>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <a href="?filter=sent" style="text-decoration: none; color: inherit; display: block;">
+                    {% if current_filter == "sent" %}✔{% else %}☐{% endif %} Sent
+                </a>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <a href="?filter=draft" style="text-decoration: none; color: inherit; display: block;">
+                    {% if current_filter == "draft" %}✔{% else %}☐{% endif %} Drafts
+                </a>
+            </div>
+
+        </div>
+
+        <!-- right side -->
+        <div style="flex: 1; border: 2px solid #cfcfcf; border-radius: 10px; padding: 18px; min-height: 300px;">
+
+            {% if success_message %}
+                <p style="color: green; margin-bottom: 15px;">{{ success_message }}</p>
+            {% endif %}
+
+            {% if error_message %}
+                <p style="color: red; margin-bottom: 15px;">{{ error_message }}</p>
+            {% endif %}
+
+            <h3 style="margin-top: 0; margin-bottom: 15px;">
+                {% if current_filter == "sent" %}
+                    Sent Messages
+                {% elif current_filter == "draft" %}
+                    Draft Messages
+                {% elif current_filter == "new" %}
+                    New Message
+                {% else %}
+                    Inbox
+                {% endif %}
+            </h3>
+
+            {% for msg in messages %}
+                <!-- Added position: relative to the container -->
+                <div style="border: 1px solid #ccc; border-radius: 10px; padding: 12px; margin-bottom: 12px; position: relative;">
+                    
+                    <!-- NEW DELETE FORM -->
+                    <form method="POST" style="position: absolute; top: 12px; right: 12px; margin: 0;" onsubmit="return confirm('Are you sure you want to delete this message?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="message_id" value="{{ msg.id }}">
+                        <button type="submit" name="action_type" value="delete" 
+                                style="background: none; border: none; color: #ff4444; cursor: pointer; font-size: 18px; padding: 4px;" 
+                                title="Delete Message">
+                            🗑️
+                        </button>
+                    </form>
+
+                    <strong>{{ msg.subject }}</strong><br>
+                    <p style="margin: 8px 0;">{{ msg.body }}</p>
+
+                    {% if current_filter == "sent" or current_filter == "draft" %}
+                        <small>To: {{ msg.receiver.username }}</small><br>
+                    {% else %}
+                        <small>From: {{ msg.sender.username }}</small><br>
+                    {% endif %}
+
+                    <small>Status: {{ msg.status }}</small>
+                </div>
+            {% empty %}
+                {% if current_filter != "new" %}
+                    <p>No messages found</p>
+                {% endif %}
+            {% endfor %}
+
+        </div>
+
+    </div>
 </div>
+
+<!-- popup background -->
+<div id="messageModal" 
+     data-show="{% if current_filter == 'new' or error_message %}true{% else %}false{% endif %}"
+     style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+
+    <!-- popup box -->
+    <div style="background: white; width: 500px; margin: 80px auto; padding: 20px; border-radius: 10px; position: relative;">
+
+        <button type="button" id="closeModal"
+            style="position: absolute; top: 10px; right: 15px; border: none; background: none; font-size: 20px; cursor: pointer;">
+            ×
+        </button>
+
+        <h3 style="margin-top: 0;">New Message</h3>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div style="margin-bottom: 15px;">
+                <label><strong>Select User</strong></label><br>
+                <select name="receiver"
+                        style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;"
+                        required>
+                    <option value="">Select User</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label><strong>Subject</strong></label><br>
+                <input type="text" name="subject"
+                       style="width: 100%; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; margin-top: 6px;"
+                       required>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label><strong>Message</strong></label><br>
+                <textarea name="body"
+                          style="width: 100%; height: 140px; border: 1px solid #ccc; padding: 10px; margin-top: 6px; resize: none;"
+                          required></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" name="action_type" value="send"
+                        style="padding: 10px 20px; border: none; border-radius: 20px; background-color: #7c4dff; color: white; cursor: pointer;">
+                    Send
+                </button>
+
+                <button type="submit" name="action_type" value="draft"
+                        style="padding: 10px 20px; border: none; border-radius: 20px; background-color: #999; color: white; cursor: pointer;">
+                    Save Draft
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    const messageModal = document.getElementById("messageModal");
+    const closeModal = document.getElementById("closeModal");
+
+    closeModal.addEventListener("click", function () {
+        messageModal.style.display = "none";
+        window.location.href = "?filter=inbox";
+    });
+
+    window.addEventListener("click", function (event) {
+        if (event.target === messageModal) {
+            messageModal.style.display = "none";
+            window.location.href = "?filter=inbox";
+        }
+    });
+
+    if (messageModal.dataset.show === "true") {
+        messageModal.style.display = "block";
+    }
+</script>
+
 {% endblock content %}

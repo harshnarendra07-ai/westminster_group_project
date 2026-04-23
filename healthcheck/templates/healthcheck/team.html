@@ -1,7 +1,272 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div>
 
+<!-- === TOP BAR (Header & Buttons) === -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Team Directory</h2>
+        <p class="text-muted mb-0">
+            Browse all teams and search by department, manager, project, or focus area.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm"
+                data-bs-toggle="modal" data-bs-target="#emailTeamModal">
+            ✉️ Email Team
+        </button>
+        <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm"
+                data-bs-toggle="modal" data-bs-target="#scheduleMeetingModal">
+            📅 Schedule Meeting
+        </button>
+    </div>
 </div>
-{% endblock content %}
+
+<!-- === SEARCH BAR === -->
+<form method="GET" action="">
+    <div class="input-group mb-4 shadow-sm mt-3">
+        <input
+            type="text"
+            name="q"
+            class="form-control rounded-pill border-primary"
+            placeholder="Search Bar (E.g. Department, Manager, Team Name)"
+            value="{{ query }}"
+        >
+    </div>
+</form>
+
+<!-- === TABLE 1: MAIN TEAM DIRECTORY TABLE === -->
+<div class="card shadow-sm border-0 mt-3 mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="border-0 ps-4">Department</th>
+                    <th class="border-0">Manager</th>
+                    <th class="border-0">Team Name</th>
+                    <th class="border-0">Development Focus Area</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                <tr>
+                    <td class="ps-4">{{ team.department }}</td>
+                    <td>{{ team.manager }}</td>
+                    <td><strong>{{ team.team_name }}</strong></td>
+                    <td>{{ team.development_focus_area }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        No teams found in the registry.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- === PAGINATION FOR MAIN TABLE === -->
+{% if teams.has_other_pages %}
+<nav aria-label="Team directory pagination" class="mt-4 mb-5">
+    <ul class="pagination justify-content-center">
+        {% if teams.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">&laquo; First</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ teams.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Previous</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link text-dark fw-bold">
+                Page {{ teams.number }} of {{ teams.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if teams.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ teams.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ teams.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">Last &raquo;</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+            <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- ============================================== -->
+<!-- === TABLE 2: DEPENDENCY MATRIX (BELOW) ======= -->
+<!-- ============================================== -->
+<div class="mt-5 mb-5 pt-3 border-top">
+    <h3 class="fw-bold mb-3">Team Dependencies Matrix</h3>
+    <p class="text-muted mb-4">Overview of upstream teams and their downstream dependencies, types, and skills.</p>
+    
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary">
+                    <tr>
+                        <th class="border-0 py-3 ps-4">Upstream (Providing Team)</th>
+                        <th class="border-0 py-3">Downstream (Receiving Team)</th>
+                        <th class="border-0 py-3">Dependency Type</th>
+                        <th class="border-0 py-3 pe-4">Key Skills & Technologies</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% for team in teams %}
+                    <tr>
+                        <td class="py-3 ps-4"><strong>{{ team.team_name }}</strong></td>
+                        
+                        <td class="py-3">
+                            {% if team.downstream_dependency %}
+                                {{ team.downstream_dependency }}
+                            {% else %}
+                                <span class="text-muted fst-italic">None</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="py-3">
+                            {% if team.dependency_type %}
+                                {{ team.dependency_type }}
+                            {% else %}
+                                <span class="text-muted fst-italic">Not specified</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-3 pe-4">
+                            {% for skill in team.skills.all %}
+                                <span class="badge bg-secondary me-1">{{ skill.skill_name }}</span>
+                            {% empty %}
+                                <span class="text-muted small">None</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            No teams found in the registry.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- === EMAIL TEAM MODAL ========================= -->
+<!-- ============================================== -->
+<div class="modal fade" id="emailTeamModal" tabindex="-1" aria-labelledby="emailTeamModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailTeamModalLabel">Email Team</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'message' %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="email-receiver" class="form-label">Select User</label>
+                        <select id="email-receiver" name="receiver" class="form-select" required>
+                            <option value="" selected disabled>Select a user</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email-subject" class="form-label">Subject</label>
+                        <input type="text" id="email-subject" name="subject" class="form-control" placeholder="Enter subject" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email-body" class="form-label">Message</label>
+                        <textarea id="email-body" name="body" class="form-control" rows="4" placeholder="Write your message" required></textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" name="action_type" value="send" class="btn btn-primary">Send Email</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- === SCHEDULE MEETING MODAL =================== -->
+<!-- ============================================== -->
+<div class="modal fade" id="scheduleMeetingModal" tabindex="-1" aria-labelledby="scheduleMeetingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scheduleMeetingModalLabel">Schedule Meeting</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'schedule' %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="meeting-team" class="form-label">Team</label>
+                        <select id="meeting-team" name="team" class="form-select" required>
+                            <option value="" selected disabled>Select a team</option>
+                            {% for team in teams %}
+                                <option value="{{ team.id }}">{{ team.team_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="meeting-title" class="form-label">Meeting Title</label>
+                        <input type="text" id="meeting-title" name="title" class="form-control" placeholder="Enter meeting title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="meeting-datetime" class="form-label">Date & Time</label>
+                        <input type="datetime-local" id="meeting-datetime" name="date_time" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="meeting-platform" class="form-label">Platform</label>
+                        <select id="meeting-platform" name="platform" class="form-select" required>
+                            <option value="" selected disabled>Select platform</option>
+                            <option value="Microsoft Teams">Microsoft Teams</option>
+                            <option value="Zoom">Zoom</option>
+                            <option value="Google Meet">Google Meet</option>
+                            <option value="Slack Huddle">Slack Huddle</option>
+                            <option value="In person">In person</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="meeting-message" class="form-label">Message</label>
+                        <textarea id="meeting-message" name="message" class="form-control" rows="3" placeholder="Optional meeting note"></textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Schedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

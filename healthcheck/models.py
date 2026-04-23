@@ -35,16 +35,19 @@ class Team(models.Model):
     manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True)
     skills = models.ManyToManyField(Skill, blank=True)
 
+    downstream_dependency = models.CharField(max_length=255, blank=True, null=True)
+    dependency_type = models.CharField(max_length=255, blank=True, null=True)
+    
     def __str__(self):
         return self.team_name
-
+    
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50, default='Engineer')
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.role}"
+        return f"{self.user.username} - {self.role}" 
 
 # PROJECTS, REPOS & DEPENDENCIES 
 class Dependency(models.Model):
