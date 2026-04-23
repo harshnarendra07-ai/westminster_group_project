@@ -96,7 +96,7 @@
 
             
                 <button class="btn btn-outline-primary w-100 text-start"
-                    onclick="toggleTeams({{ dept.id }})">
+                    onclick="toggleTeams('{{ dept.id }}')">
                     {{ dept.dept_name }}
                     (Leader: {{ dept.dept_head }})
                     - {{ dept.team_set.count }} teams
@@ -187,6 +187,8 @@
 {% endblock content %}
 
 {% block scripts %}
+{{ graph_nodes|json_script:"graph-nodes-data" }}
+{{ graph_links|json_script:"graph-links-data" }}
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 function toggleDepartments() {
@@ -336,8 +338,8 @@ function renderLegend(departments, color) {
 }
 
 function drawGraph() {
- const allNodes = {{ graph_nodes|safe }};
- const links = {{ graph_links|safe }};
+ const allNodes = JSON.parse(document.getElementById("graph-nodes-data").textContent);
+ const links = JSON.parse(document.getElementById("graph-links-data").textContent);
 
     const svg = d3.select("#networkGraph");
     svg.selectAll("*").remove();
