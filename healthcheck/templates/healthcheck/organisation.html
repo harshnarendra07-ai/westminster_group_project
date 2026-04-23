@@ -7,36 +7,28 @@
 <p>Total Departments: {{ total_departments }}</p>
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
 
-    <!-- LEFT SIDE: Buttons -->
     <div class="d-flex gap-2">
         <button class="btn btn-outline-secondary" onclick="showListView()">
-    List View
-</button>
+            List View
+        </button>
 
         <button class="btn btn-primary" onclick="showNetworkView()">
             Network View
         </button>
-<button class="btn btn-info text-white" onclick="exportOrganisationCSV()">
-    Export
-</button>
-
+        <button class="btn btn-info text-white" onclick="exportOrganisationCSV()">
+            Export
+        </button>
     </div>
 
-    <!-- RIGHT SIDE: Search -->
     <div style="width: 300px; position: relative;">
         <input type="text"
                id="searchFilter"
                class="form-control"
                placeholder="Search departments, teams, types or dependencies..."
                onkeyup="filterOrganisation()">
-
-        
-       
     </div>
 
 </div>
-
-
 
 <h4>Departments</h4>
 <div id="listView">
@@ -63,13 +55,12 @@
                 {% endfor %}
             </select>
             <label class="form-label">Team Type</label>
-<select id="teamTypeFilter" class="form-select mb-3" onchange="filterOrganisation()">
-    <option value="all" selected>All Team Types</option>
-    {% for team_type in team_types %}
-        <option value="{{ team_type|lower }}">{{ team_type }}</option>
-    {% endfor %}
-</select>
-
+            <select id="teamTypeFilter" class="form-select mb-3" onchange="filterOrganisation()">
+                <option value="all" selected>All Team Types</option>
+                {% for team_type in team_types %}
+                    <option value="{{ team_type|lower }}">{{ team_type }}</option>
+                {% endfor %}
+            </select>
 
             <label class="form-label">Dependencies</label>
             <select id="dependencyFilter" class="form-select mb-3" onchange="filterOrganisation()">
@@ -94,9 +85,8 @@
                  data-department="{{ dept.dept_name|lower }}"
                  data-leader="{{ dept.dept_head|lower }}">
 
-            
                 <button class="btn btn-outline-primary w-100 text-start"
-                    onclick="toggleTeams({{ dept.id }})">
+                    onclick="toggleTeams('{{ dept.id }}')">
                     {{ dept.dept_name }}
                     (Leader: {{ dept.dept_head }})
                     - {{ dept.team_set.count }} teams
@@ -110,7 +100,6 @@
           data-downstream-count="{{ team.supports.count }}"
           data-search="{{ team.team_name|lower }} {{ team.team_type|lower }} {{ dept.dept_name|lower }} {% for project in team.project_set.all %}{{ project.jira_project_name|lower }} {{ project.jira_board_url|lower }} {% endfor %} {% for repo in team.repository_set.all %}{{ repo.repo_url|lower }} {% endfor %} {% for dep in team.depends_on.all %}{{ dep.upstream_team.team_name|lower }} {% endfor %} {% for dep in team.supports.all %}{{ dep.downstream_team.team_name|lower }} {% endfor %}">
             <strong>{{ team.team_name }}</strong>
-
 
             <div style="margin-left: 15px; margin-top: 5px;">
                 <small><strong>Team Type:</strong> {{ team.team_type }}</small><br>
@@ -170,7 +159,6 @@
     </div>
 </div>
 </div>
-
 
 <div id="networkView" style="display: none; margin-top: 15px; overflow-x: auto;">
 
@@ -233,12 +221,11 @@ function filterOrganisation() {
 
         var teamItems = deptItem.querySelectorAll(".team-item");
         var teamList = deptItem.querySelector("ul[id^='teams-']");
-       var deptFilterMatch = (deptValue === "all" || deptName === deptValue);
-var deptSearchMatch = (
-    searchValue !== "" &&
-    (deptName.includes(searchValue) || deptLeader.includes(searchValue))
-);
-
+        var deptFilterMatch = (deptValue === "all" || deptName === deptValue);
+        var deptSearchMatch = (
+            searchValue !== "" &&
+            (deptName.includes(searchValue) || deptLeader.includes(searchValue))
+        );
 
         var hasMatchingTeam = false;
 
@@ -253,12 +240,11 @@ var deptSearchMatch = (
 
             var teamMatch = (teamValue === "all" || teamName === teamValue);
             var teamTypeMatch = (teamTypeValue === "all" || teamTypeName === teamTypeValue);
-           var searchMatch = (
-    searchValue === "" ||
-    deptSearchMatch ||
-    searchText.includes(searchValue)
-);
-
+            var searchMatch = (
+                searchValue === "" ||
+                deptSearchMatch ||
+                searchText.includes(searchValue)
+            );
 
             var dependencyMatch = false;
 
@@ -280,11 +266,10 @@ var deptSearchMatch = (
             }
         });
 
-               if (deptFilterMatch && hasMatchingTeam) {
+        if (deptFilterMatch && hasMatchingTeam) {
             deptItem.style.display = "list-item";
             teamList.style.display = "block";
             visibleDepartments += 1;
-            
         } else {
             deptItem.style.display = "none";
             teamList.style.display = "none";
@@ -294,7 +279,6 @@ var deptSearchMatch = (
     document.getElementById("noResultsMessage").style.display =
         visibleDepartments === 0 ? "block" : "none";
 }
-
 
 function showListView() {
     document.getElementById("listView").style.display = "block";
@@ -336,8 +320,9 @@ function renderLegend(departments, color) {
 }
 
 function drawGraph() {
- const allNodes = {{ graph_nodes|safe }};
- const links = {{ graph_links|safe }};
+    // FIX: Parsed JSON properly so VS Code recognises this as valid JS
+    const allNodes = JSON.parse('{{ graph_nodes|escapejs }}');
+    const links = JSON.parse('{{ graph_links|escapejs }}');
 
     const svg = d3.select("#networkGraph");
     svg.selectAll("*").remove();
@@ -353,7 +338,6 @@ function drawGraph() {
     .style("opacity", 0.4)
     .style("pointer-events", "none");
     
-
     const linkedIds = new Set();
     links.forEach(link => {
         linkedIds.add(Number(link.source));
@@ -364,20 +348,24 @@ function drawGraph() {
     if (nodes.length === 0) {
         nodes = allNodes;
     }
-if (nodes.length === 0) {
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", height / 2)
-        .attr("text-anchor", "middle")
-        .attr("fill", "#666")
-        .text("No data available");
-    return; // stops the graph from trying to render
-}
+
+    if (nodes.length === 0) {
+        svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", height / 2)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#666")
+            .text("No data available");
+        return; // stops the graph from trying to render
+    }
+    
     const departments = [...new Set(nodes.map(d => d.department))];
     const color = d3.scaleOrdinal()
         .domain(departments)
         .range(d3.schemeTableau10);
-         renderLegend(departments, color);
+    
+    renderLegend(departments, color);
+    
     const departmentCenters = {};
     const radius = Math.min(width, height) * 0.20;
 
@@ -396,7 +384,6 @@ if (nodes.length === 0) {
             .strength(1))
         .force("charge", d3.forceManyBody().strength(-900))
         .force("collision", d3.forceCollide(45))
-
         .force("x", d3.forceX(d => departmentCenters[d.department].x).strength(0.18))
         .force("y", d3.forceY(d => departmentCenters[d.department].y).strength(0.18))
         .force("center", d3.forceCenter(width / 2, height / 2));
@@ -492,6 +479,7 @@ if (nodes.length === 0) {
         d.fy = null;
     }
 }
+
 function exportOrganisationCSV() {
     var rows = [];
     rows.push(["Department", "Team", "Team Type", "Specialisation", "Upstream Dependencies", "Downstream Dependencies"]);
