@@ -175,6 +175,8 @@
 {% endblock content %}
 
 {% block scripts %}
+{{ graph_nodes|json_script:"graph-nodes-data" }}
+{{ graph_links|json_script:"graph-links-data" }}
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 function toggleDepartments() {
@@ -320,9 +322,8 @@ function renderLegend(departments, color) {
 }
 
 function drawGraph() {
-    // FIX: Parsed JSON properly so VS Code recognises this as valid JS
-    const allNodes = JSON.parse('{{ graph_nodes|escapejs }}');
-    const links = JSON.parse('{{ graph_links|escapejs }}');
+ const allNodes = {{ graph_nodes|safe }};
+ const links = {{ graph_links|safe }};
 
     const svg = d3.select("#networkGraph");
     svg.selectAll("*").remove();

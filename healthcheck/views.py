@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-import json
 import datetime
 from .forms import MeetingForm, UserUpdateForm
 from django.contrib.auth.forms import PasswordChangeForm
@@ -170,14 +169,13 @@ def organisation_view(request):
             "target": dep.upstream_team.id,
         })
 
-    # Serialize graph_nodes and graph_links as JSON for use in JavaScript in the template
     context = {
         'departments': departments,
         'team_types': team_types,
         'total_departments': departments.count(),
         'total_teams': teams.count(),
-        'graph_nodes': json.dumps(graph_nodes),  # Changed: serialize to JSON
-        'graph_links': json.dumps(graph_links),  # Changed: serialize to JSON
+        'graph_nodes': graph_nodes,
+        'graph_links': graph_links,
     }
 
     return render(request, "healthcheck/organisation.html", context)
