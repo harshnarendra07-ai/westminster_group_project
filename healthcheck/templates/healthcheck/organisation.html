@@ -16,10 +16,10 @@
         <button class="btn btn-primary" onclick="showNetworkView()">
             Network View
         </button>
+<button class="btn btn-info text-white" onclick="exportOrganisationCSV()">
+    Export
+</button>
 
-        <button class="btn btn-info text-white">
-            Export
-        </button>
     </div>
 
     <!-- RIGHT SIDE: Search -->
@@ -27,18 +27,11 @@
         <input type="text"
                id="searchFilter"
                class="form-control"
-               placeholder="Search teams or dependencies..."
+               placeholder="Search departments, teams, types or dependencies..."
                onkeyup="filterOrganisation()">
 
-        <!-- Optional search icon -->
-        <span style="
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #888;">
-            🔍
-        </span>
+        
+       
     </div>
 
 </div>
@@ -69,16 +62,14 @@
                     {% endfor %}
                 {% endfor %}
             </select>
-             
-              <label class="form-label">Team Type</label>
-              <select id="teamTypeFilter" class="form-select mb-3" onchange="filterOrganisation()">
-              <option value="all" selected>All Team Types</option>
-       {% for dept in departments %}
-             {% for team in dept.team_set.all %}
-            <option value="{{ team.team_type|lower }}">{{ team.team_type }}</option>
-        {% endfor %}
+            <label class="form-label">Team Type</label>
+<select id="teamTypeFilter" class="form-select mb-3" onchange="filterOrganisation()">
+    <option value="all" selected>All Team Types</option>
+    {% for team_type in team_types %}
+        <option value="{{ team_type|lower }}">{{ team_type }}</option>
     {% endfor %}
 </select>
+
 
             <label class="form-label">Dependencies</label>
             <select id="dependencyFilter" class="form-select mb-3" onchange="filterOrganisation()">
@@ -100,8 +91,10 @@
             <ul class="list-group">
         {% for dept in departments %}
             <li class="list-group-item department-item"
-                data-department="{{ dept.dept_name|lower }}">
+                 data-department="{{ dept.dept_name|lower }}"
+                 data-leader="{{ dept.dept_head|lower }}">
 
+            
                 <button class="btn btn-outline-primary w-100 text-start"
                     onclick="toggleTeams({{ dept.id }})">
                     {{ dept.dept_name }}
@@ -112,12 +105,33 @@
     {% for team in dept.team_set.all %}
         <li class="team-item"
           data-team="{{ team.team_name|lower }}"
-         data-teamtype="{{ team.team_type|lower }}">
-         <strong>{{ team.team_name }}</strong>
+          data-teamtype="{{ team.team_type|lower }}"
+          data-upstream-count="{{ team.depends_on.count }}"
+          data-downstream-count="{{ team.supports.count }}"
+          data-search="{{ team.team_name|lower }} {{ team.team_type|lower }} {{ dept.dept_name|lower }} {% for project in team.project_set.all %}{{ project.jira_project_name|lower }} {{ project.jira_board_url|lower }} {% endfor %} {% for repo in team.repository_set.all %}{{ repo.repo_url|lower }} {% endfor %} {% for dep in team.depends_on.all %}{{ dep.upstream_team.team_name|lower }} {% endfor %} {% for dep in team.supports.all %}{{ dep.downstream_team.team_name|lower }} {% endfor %}">
+            <strong>{{ team.team_name }}</strong>
+
 
             <div style="margin-left: 15px; margin-top: 5px;">
                 <small><strong>Team Type:</strong> {{ team.team_type }}</small><br>
                 <small><strong>Specialisation:</strong> {{ team.development_focus_area }}</small>
+                <br>
+{% for project in team.project_set.all %}
+    <small><strong>Jira Board:</strong>
+        <a href="{{ project.jira_board_url }}" target="_blank">{{ project.jira_project_name }}</a>
+    </small><br>
+{% empty %}
+    <small><strong>Jira Board:</strong> Not available</small><br>
+{% endfor %}
+
+{% for repo in team.repository_set.all %}
+    <small><strong>GitHub Repo:</strong>
+        <a href="{{ repo.repo_url }}" target="_blank">Project codebase</a>
+    </small><br>
+{% empty %}
+    <small><strong>GitHub Repo:</strong> Not available</small><br>
+{% endfor %}
+
                 <ul>
                     {% for dep in team.depends_on.all %}
                         <li>{{ dep.upstream_team.team_name }}</li>
@@ -147,18 +161,24 @@
             <li class="list-group-item">No departments found</li>
         {% endfor %}
        </ul>
+
+       <p id="noResultsMessage" class="text-muted mt-3" style="display: none;">
+           No matching results found.
+       </p>
+
         </div>
     </div>
 </div>
 </div>
 
-<div id="networkView" style="display: none; margin-top: 15px;">
+
+<div id="networkView" style="display: none; margin-top: 15px; overflow-x: auto;">
 
     <div id="graphLegend" class="mb-3 d-flex flex-wrap gap-3 p-2"
          style="background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px;">
     </div>
 
-    <svg id="networkGraph" width="100%" height="500"
+    <svg id="networkGraph" width="100%" height="850px"
          style="border: 1px solid #dcdcdc; background: #fcfcfc; border-radius: 8px;">
     </svg>
 
@@ -202,15 +222,23 @@ function filterOrganisation() {
     var departmentsSection = document.getElementById("departmentsSection");
     var button = document.querySelector("button.btn-success");
     var departmentItems = document.querySelectorAll(".department-item");
-
+    var visibleDepartments = 0;
+    
     departmentsSection.style.display = "block";
     button.textContent = "Hide Departments";
 
     departmentItems.forEach(function(deptItem) {
         var deptName = deptItem.getAttribute("data-department");
+        var deptLeader = deptItem.getAttribute("data-leader") || "";
+
         var teamItems = deptItem.querySelectorAll(".team-item");
         var teamList = deptItem.querySelector("ul[id^='teams-']");
-        var deptMatch = (deptValue === "all" || deptName === deptValue);
+       var deptFilterMatch = (deptValue === "all" || deptName === deptValue);
+var deptSearchMatch = (
+    searchValue !== "" &&
+    (deptName.includes(searchValue) || deptLeader.includes(searchValue))
+);
+
 
         var hasMatchingTeam = false;
 
@@ -218,18 +246,19 @@ function filterOrganisation() {
             var teamName = teamItem.getAttribute("data-team");
             var teamTypeName = teamItem.getAttribute("data-teamtype");
             var teamText = teamItem.innerText.toLowerCase();
+            var searchText = (teamItem.getAttribute("data-search") || "") + " " + deptLeader;
 
-            var hasUpstream = !teamText.includes("no upstream dependencies");
-            var hasDownstream = !teamText.includes("no downstream dependencies");
+            var hasUpstream = Number(teamItem.getAttribute("data-upstream-count")) > 0;
+            var hasDownstream = Number(teamItem.getAttribute("data-downstream-count")) > 0;
 
             var teamMatch = (teamValue === "all" || teamName === teamValue);
             var teamTypeMatch = (teamTypeValue === "all" || teamTypeName === teamTypeValue);
-            var searchMatch = (
-                searchValue === "" ||
-                teamText.includes(searchValue) ||
-                deptName.includes(searchValue) ||
-                teamName.includes(searchValue)
-            );
+           var searchMatch = (
+    searchValue === "" ||
+    deptSearchMatch ||
+    searchText.includes(searchValue)
+);
+
 
             var dependencyMatch = false;
 
@@ -251,15 +280,21 @@ function filterOrganisation() {
             }
         });
 
-        if (deptMatch && hasMatchingTeam) {
+               if (deptFilterMatch && hasMatchingTeam) {
             deptItem.style.display = "list-item";
             teamList.style.display = "block";
+            visibleDepartments += 1;
+            
         } else {
             deptItem.style.display = "none";
             teamList.style.display = "none";
         }
     });
+
+    document.getElementById("noResultsMessage").style.display =
+        visibleDepartments === 0 ? "block" : "none";
 }
+
 
 function showListView() {
     document.getElementById("listView").style.display = "block";
@@ -357,10 +392,11 @@ if (nodes.length === 0) {
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links)
             .id(d => d.id)
-            .distance(60)
+            .distance(180)
             .strength(1))
-        .force("charge", d3.forceManyBody().strength(-160))
-        .force("collision", d3.forceCollide(20))
+        .force("charge", d3.forceManyBody().strength(-900))
+        .force("collision", d3.forceCollide(45))
+
         .force("x", d3.forceX(d => departmentCenters[d.department].x).strength(0.18))
         .force("y", d3.forceY(d => departmentCenters[d.department].y).strength(0.18))
         .force("center", d3.forceCenter(width / 2, height / 2));
@@ -381,7 +417,7 @@ if (nodes.length === 0) {
         .data(nodes)
         .enter()
         .append("circle")
-        .attr("r", 8)
+        .attr("r", 11)
         .style("fill", d => color(d.department))
         .style("stroke", "#ffffff")
         .style("stroke-width", 1.5)
@@ -401,7 +437,7 @@ if (nodes.length === 0) {
         .enter()
         .append("text")
         .text(d => d.name)
-        .attr("font-size", 11)
+        .attr("font-size", 16)
         .attr("font-family", "Arial, sans-serif")
         .attr("dx", 10)
         .attr("dy", 4)
@@ -413,14 +449,14 @@ if (nodes.length === 0) {
         d3.select(this)
             .transition()
             .duration(150)
-            .attr("r", 10);
+            .attr("r", 15);
     })
     .on("mouseout", function(event, d) {
         label.filter(l => l.id === d.id).style("display", "none");
         d3.select(this)
             .transition()
             .duration(150)
-            .attr("r", 8);
+            .attr("r", 11);
     });
 
     simulation.on("tick", () => {
@@ -456,5 +492,75 @@ if (nodes.length === 0) {
         d.fy = null;
     }
 }
+function exportOrganisationCSV() {
+    var rows = [];
+    rows.push(["Department", "Team", "Team Type", "Specialisation", "Upstream Dependencies", "Downstream Dependencies"]);
+
+    document.querySelectorAll(".department-item").forEach(function(deptItem) {
+        var deptButton = deptItem.querySelector("button");
+        var department = deptButton ? deptButton.innerText.trim().replace(/\s+/g, " ") : "";
+
+        deptItem.querySelectorAll(".team-item").forEach(function(teamItem) {
+            if (teamItem.style.display === "none") {
+                return;
+            }
+
+            var teamName = teamItem.querySelector("strong") ? teamItem.querySelector("strong").innerText.trim() : "";
+            var teamType = "";
+            var specialisation = "";
+            var upstream = [];
+            var downstream = [];
+
+            teamItem.querySelectorAll("small").forEach(function(small) {
+                var text = small.innerText.trim();
+
+                if (text.startsWith("Team Type:")) {
+                    teamType = text.replace("Team Type:", "").trim();
+                }
+
+                if (text.startsWith("Specialisation:")) {
+                    specialisation = text.replace("Specialisation:", "").trim();
+                }
+            });
+
+            var dependencySections = teamItem.querySelectorAll("ul");
+
+            if (dependencySections[0]) {
+                dependencySections[0].querySelectorAll("li").forEach(function(item) {
+                    upstream.push(item.innerText.trim());
+                });
+            }
+
+            if (dependencySections[1]) {
+                dependencySections[1].querySelectorAll("li").forEach(function(item) {
+                    downstream.push(item.innerText.trim());
+                });
+            }
+
+            rows.push([
+                department,
+                teamName,
+                teamType,
+                specialisation,
+                upstream.join("; "),
+                downstream.join("; ")
+            ]);
+        });
+    });
+
+    var csvContent = rows.map(function(row) {
+        return row.map(function(value) {
+            return '"' + String(value).replace(/"/g, '""') + '"';
+        }).join(",");
+    }).join("\n");
+
+    var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    var link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "organisation_export.csv";
+    link.click();
+}
+
 </script>
 {% endblock scripts %}

@@ -125,9 +125,12 @@ def department_view(request):
 def organisation_view(request):
     departments = Department.objects.prefetch_related(
         'team_set__depends_on__upstream_team',
-        'team_set__supports__downstream_team'
+        'team_set__supports__downstream_team',
+        'team_set__project_set',
+         'team_set__repository_set'
     )
     teams = Team.objects.select_related('department').all()
+    team_types = Team.objects.values_list('team_type', flat=True).distinct().order_by('team_type')
     deps = Dependency.objects.select_related('downstream_team', 'upstream_team').all()
     graph_nodes = []
     for team in teams:
@@ -148,6 +151,7 @@ def organisation_view(request):
     # Serialize graph_nodes and graph_links as JSON for use in JavaScript in the template
     context = {
         'departments': departments,
+        'team_types': team_types,
         'total_departments': departments.count(),
         'total_teams': teams.count(),
         'graph_nodes': json.dumps(graph_nodes),  # Changed: serialize to JSON
