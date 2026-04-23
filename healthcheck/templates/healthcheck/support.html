@@ -1,7 +1,146 @@
 {% extends 'healthcheck/base.html' %}
 
 {% block content %}
-<div>
 
+<div class="container py-4">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-2">Support</h2>
+        <p class="text-muted mb-0">
+            Use this page if you need help with login, messages, meetings, team data, or any other issue in the SKY Engineering system.
+        </p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-3" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4">Contact Support</h4>
+
+                    <form method="post" action="">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <input type="text"
+                                   id="support-name"
+                                   name="name"
+                                   class="form-control"
+                                   placeholder="Your Name"
+                                   aria-label="Your Name"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <input type="email"
+                                   id="support-email"
+                                   name="email"
+                                   class="form-control"
+                                   placeholder="Your Email"
+                                   aria-label="Your Email"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <select id="support-section"
+                                    name="section"
+                                    class="form-select"
+                                    aria-label="Page or Section"
+                                    required>
+                                <option value="" selected disabled>Select the section</option>
+                                <option value="Teams">Teams</option>
+                                <option value="Organisation">Organisation</option>
+                                <option value="Messages">Messages</option>
+                                <option value="Schedule">Schedule</option>
+                                <option value="Reports">Reports</option>
+                                <option value="Login">Login / Signup</option>
+                                <option value="Profile">Profile</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <select id="support-type"
+                                    name="issue_type"
+                                    class="form-select"
+                                    aria-label="Issue Type"
+                                    required>
+                                <option value="" selected disabled>Select issue type</option>
+                                <option value="Bug">Bug / Error</option>
+                                <option value="Access">Access / Login Problem</option>
+                                <option value="Data">Incorrect Data</option>
+                                <option value="Feature">Feature Request</option>
+                                <option value="UI">UI / Display Issue</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <textarea id="support-message"
+                                      name="message"
+                                      class="form-control"
+                                      rows="5"
+                                      placeholder="Describe the problem clearly"
+                                      aria-label="Message"
+                                      required></textarea>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-3">Support Details</h4>
+                    <ul class="text-muted mb-0">
+                        <li><strong>Email:</strong> <a href="mailto:support@example.com">support@example.com</a></li>
+                        <li><strong>Admin:</strong> system administrator</li>
+                        <li><strong>Response time:</strong> usually within 1–2 working days</li>
+                        <li><strong>Best for:</strong> login issues, missing data, and broken pages</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-3">Common Issues</h4>
+                    <ul class="text-muted mb-0">
+                        <li>Unable to log in</li>
+                        <li>Message not sending</li>
+                        <li>Meeting not saving</li>
+                        <li>Team details not displaying correctly</li>
+                        <li>Search results not showing expected records</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-3">Quick Links</h4>
+                    <ul class="mb-0">
+                        <li><a href="{% url 'help' %}" class="text-decoration-none">Help Centre</a></li>
+                        <li><a href="{% url 'team' %}" class="text-decoration-none">Teams</a></li>
+                        <li><a href="{% url 'message' %}" class="text-decoration-none">Messages</a></li>
+                        <li><a href="{% url 'schedule' %}" class="text-decoration-none">Schedule</a></li>
+                        <li><a href="{% url 'dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock content %}
+
+{% endblock %}

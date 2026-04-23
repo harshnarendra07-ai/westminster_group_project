@@ -55,7 +55,7 @@
                     class="d-inline-block align-text-top">
             </a>
             <div class="d-flex align-items-center">
-                <a href="#" class="nav-link me-3">Help</a>
+                <a href="{% url 'help' %}" class="nav-link me-3">Help</a>
                 <a href="{% url 'support' %}" class="nav-link me-3">Contact Support</a>
 
                 {% if user.is_authenticated %}

@@ -179,11 +179,11 @@
                     {% csrf_token %}
 
                     <div class="mb-3">
-                        <label for="email-team" class="form-label">Team</label>
-                        <select id="email-team" name="team" class="form-select" required>
-                            <option value="" selected disabled>Select a team</option>
-                            {% for team in teams %}
-                                <option value="{{ team.id }}">{{ team.team_name }}</option>
+                        <label for="email-receiver" class="form-label">Select User</label>
+                        <select id="email-receiver" name="receiver" class="form-select" required>
+                            <option value="" selected disabled>Select a user</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.username }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -200,7 +200,7 @@
 
                     <div class="text-end">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Send Email</button>
+                        <button type="submit" name="action_type" value="send" class="btn btn-primary">Send Email</button>
                     </div>
                 </form>
             </div>

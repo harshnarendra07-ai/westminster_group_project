@@ -1,23 +1,209 @@
 {% extends 'healthcheck/base.html' %}
+
 {% block content %}
-<div class="container-fluid mt-4">
-    <h2 class="mb-4">Help Center</h2>
-    <hr>
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card shadow-sm mb-4">
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-2">Help Centre</h2>
+        <p class="text-muted mb-0">
+            This page explains how to use the SKY Engineering web application, including Teams, Organisation, Messages, Schedule, and Reports.
+        </p>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
                 <div class="card-body">
-                    <h5 class="card-title fw-bold">How to Schedule a Meeting</h5>
-                    <p class="card-text text-muted">Navigate to the Schedule page, select your desired date and time, choose the appropriate team, and click "Schedule Meeting". Make sure the date is not in the past.</p>
+                    <h5 class="card-title fw-semibold">Teams</h5>
+                    <p class="card-text text-muted">
+                        Search teams, view managers, see team members, dependencies, skills, and contact details.
+                    </p>
                 </div>
             </div>
-            <div class="card shadow-sm mb-4">
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
                 <div class="card-body">
-                    <h5 class="card-title fw-bold">Viewing Reports</h5>
-                    <p class="card-text text-muted">Go to the Reports tab to view interactive charts regarding team distribution. You can also export a CSV spreadsheet of the raw data from there.</p>
+                    <h5 class="card-title fw-semibold">Messages</h5>
+                    <p class="card-text text-muted">
+                        Send new messages, view inbox items, check sent messages, and save drafts.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-semibold">Schedule</h5>
+                    <p class="card-text text-muted">
+                        Create meeting schedules, choose a platform, and manage upcoming meetings.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-semibold">Organisation</h5>
+                    <p class="card-text text-muted">
+                        Explore departments, team types, and how teams relate to each other.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-semibold">Reports</h5>
+                    <p class="card-text text-muted">
+                        Generate PDF or Excel reports such as number of teams and teams without managers.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="card shadow-sm border-0 rounded-4 mb-5">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3">Getting Started</h4>
+            <ul class="text-muted mb-0">
+                <li class="mb-2">Open the Team page to search for engineering teams and review their details.</li>
+                <li class="mb-2">Use Organisation to understand departments, team types, and dependencies.</li>
+                <li class="mb-2">Go to Messages to send team updates, save drafts, or check inbox and sent items.</li>
+                <li class="mb-2">Use Schedule to create and manage meetings for teams.</li>
+                <li class="mb-2">Check Reports to generate summaries and exports.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4 mb-5">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-4">Frequently Asked Questions</h4>
+
+            <div class="accordion" id="helpAccordion">
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            How do I search for a team?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            Go to the Teams page and use the search bar to find a team by name, department, manager, or focus area.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            How do I view team dependencies?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            On the Teams page, each team record can show upstream and downstream dependencies so you can understand how teams relate to each other.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            How do I send a message?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            Open Messages, choose New Message, select a user, add a subject and body, then click Send.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqFour">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            Can I save a message without sending it?
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="faqFour" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            Yes. Use Save Draft instead of Send. You can return to the Drafts section later.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqFive">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                            How do I schedule a meeting?
+                        </button>
+                    </h2>
+                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="faqFive" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            Go to the Schedule page, choose a team, enter the date and time, select a platform, and submit the form.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqSix">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+                            How do I generate reports?
+                        </button>
+                    </h2>
+                    <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="faqSix" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            Open the Reports page and select the report you want. Use the export option if PDF or Excel is available.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="faqSeven">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
+                            What if I cannot log in?
+                        </button>
+                    </h2>
+                    <div id="collapseSeven" class="accordion-collapse collapse" aria-labelledby="faqSeven" data-bs-parent="#helpAccordion">
+                        <div class="accordion-body">
+                            Check your username and password first. If the issue continues, contact support or the system administrator.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3">Common Problems</h4>
+            <ul class="text-muted mb-0">
+                <li class="mb-2">If you cannot find a team, try using fewer search terms.</li>
+                <li class="mb-2">If a message fails, make sure the recipient, subject, and message body are filled in.</li>
+                <li class="mb-2">If a meeting is not saved, check the date, time, and platform fields.</li>
+                <li class="mb-2">If a page looks incorrect, refresh the browser and try again.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4 bg-light">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3">Need More Help?</h4>
+            <p class="text-muted mb-3">
+                If you still need support, contact your tutor, module leader, or system administrator.
+            </p>
+            <a href="{% url 'support' %}" class="btn btn-primary rounded-pill px-4">
+                Contact Support
+            </a>
+        </div>
+    </div>
 </div>
+
 {% endblock %}
