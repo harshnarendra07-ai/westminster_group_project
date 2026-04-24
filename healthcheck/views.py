@@ -1,5 +1,3 @@
-from urllib import request
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 import datetime
@@ -296,7 +294,7 @@ def schedule_view(request):
             new_meeting.organiser = request.user 
             new_meeting.save()
 
-            AuditLog.objects.create(user=request.user, action="Downloaded a secure Engineering CSV Report")
+            AuditLog.objects.create(user=request.user, action=f"Scheduled a new meeting: {new_meeting.title}")
             if not meeting_to_edit:
                 team_members = UserProfile.objects.filter(team=new_meeting.team)
                 
@@ -386,7 +384,7 @@ def edit_meeting(request, meeting_id):
         form = MeetingForm(request.POST, instance=meeting)
         if form.is_valid():
             form.save()
-            AuditLog.objects.create(user=request.user, action="Downloaded a secure Engineering CSV Report")
+            AuditLog.objects.create(user=request.user, action="Updated an existing meeting")
             return redirect('schedule')
     else:
         form = MeetingForm(instance=meeting)
@@ -396,7 +394,7 @@ def edit_meeting(request, meeting_id):
 def delete_meeting(request, meeting_id):
     meet = get_object_or_404(Meeting, pk=meeting_id, organiser=request.user)
     meet.delete()
-    AuditLog.objects.create(user=request.user, action="Downloaded a secure Engineering CSV Report")
+    AuditLog.objects.create(user=request.user, action="Deleted a meeting")
     return redirect('schedule')
 
 #the schedule view ends here;
