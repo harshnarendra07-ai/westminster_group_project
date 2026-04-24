@@ -1,3 +1,5 @@
+from urllib import request
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 import datetime
@@ -6,7 +8,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from .models import Meeting, Department, Team, Message, Dependency, UserProfile
+from .models import Meeting, Department, Team, Message, Dependency, UserProfile, AuditLog
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -293,6 +295,8 @@ def schedule_view(request):
             new_meeting = form.save(commit=False)          
             new_meeting.organiser = request.user 
             new_meeting.save()
+
+            AuditLog.objects.create(user=request.user, action="Downloaded a secure Engineering CSV Report")
             if not meeting_to_edit:
                 team_members = UserProfile.objects.filter(team=new_meeting.team)
                 
@@ -382,6 +386,7 @@ def edit_meeting(request, meeting_id):
         form = MeetingForm(request.POST, instance=meeting)
         if form.is_valid():
             form.save()
+            AuditLog.objects.create(user=request.user, action="Downloaded a secure Engineering CSV Report")
             return redirect('schedule')
     else:
         form = MeetingForm(instance=meeting)
@@ -391,6 +396,7 @@ def edit_meeting(request, meeting_id):
 def delete_meeting(request, meeting_id):
     meet = get_object_or_404(Meeting, pk=meeting_id, organiser=request.user)
     meet.delete()
+    AuditLog.objects.create(user=request.user, action="Downloaded a secure Engineering CSV Report")
     return redirect('schedule')
 
 #the schedule view ends here;

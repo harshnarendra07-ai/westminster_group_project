@@ -9,7 +9,7 @@ sys.path.append(BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'skyproject.settings')
 django.setup()
 
-from healthcheck.models import Department, Manager, Skill, Team, Dependency, Project, Repository
+from healthcheck.models import Department, Manager, Skill, Team, Dependency, Project, Repository, UserProfile
 from django.contrib.auth.models import User
 
 def force_import_final():
@@ -94,6 +94,23 @@ def force_import_final():
                     repo_url=repo_url,
                     defaults={
                         'team': team
+                    }
+                )
+
+                for i in range(1, 6):
+                    safe_team_name = team_name.lower().replace(" ", "_").replace("-", "_")
+                    eng_username = f"{safe_team_name}_eng_{i}"
+                
+                    eng_user, created = User.objects.get_or_create(username=eng_username)
+                    if created or not eng_user.password:
+                        eng_user.set_password('skyengineering123')
+                        eng_user.save()
+                
+                    UserProfile.objects.update_or_create(
+                        user=eng_user,
+                        defaults={
+                            'role': 'Engineer',
+                            'team': team
                     }
                 )
 
