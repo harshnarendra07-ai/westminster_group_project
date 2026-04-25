@@ -114,3 +114,50 @@ class Vote(models.Model):
     
     class Meta:
         unique_together = ('user', 'session', 'card')
+
+## report models
+# stores the different categories a report can be like "Performance Report" or "Team Summary"
+class ReportType(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+# main model for a generated report, stores everything about it at the time it was created
+class Report(models.Model):
+
+    # defines what level the report covers
+    SCOPE_TYPES = [
+        ("user", "Individual User"),
+        ("manager", "Manager"),
+        ("team", "Team"),
+        ("department", "Department"),
+    ]
+
+    title = models.CharField(max_length=200)
+    report_type = models.ForeignKey(ReportType, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    scope_type = models.CharField(max_length=30, choices=SCOPE_TYPES, default="team")
+
+    # only one of these will be set depending on which scope was picked
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+    session = models.ForeignKey(Session, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports")
+
+    # tracks which data the user wanted included
+    include_votes = models.BooleanField(default=True)
+    include_messages = models.BooleanField(default=False)
+    include_meetings = models.BooleanField(default=False)
+
+    # snapshot of the counts at the time the report was generated
+    total_votes = models.IntegerField(default=0)
+    total_messages = models.IntegerField(default=0)
+    total_meetings = models.IntegerField(default=0)
+
+    # set automatically when the report is saved
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
