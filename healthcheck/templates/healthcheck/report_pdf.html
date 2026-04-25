@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report.title }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { margin-bottom: 20px; }
+        p { margin-bottom: 10px; }
+        strong { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<h1>{{ report.title }}</h1>
+
+<!-- basic report info -->
+<p><strong>Type:</strong> {{ report.report_type.name }}</p>
+<p><strong>Created:</strong> {{ report.created_at }}</p>
+<p><strong>Scope:</strong> {{ report.get_scope_type_display }}</p>
+
+<!-- show whichever scope target was selected, only one of these will show -->
+{% if report.user %}<p><strong>User:</strong> {{ report.user.username }}</p>{% endif %}
+{% if report.manager %}<p><strong>Manager:</strong> {{ report.manager }}</p>{% endif %}
+{% if report.team %}<p><strong>Team:</strong> {{ report.team }}</p>{% endif %}
+{% if report.department %}<p><strong>Department:</strong> {{ report.department }}</p>{% endif %}
+
+<!-- session only filters votes, so we make that clear with a note -->
+<p><strong>Vote Session:</strong> {% if report.session %}{{ report.session.session_name }}{% else %}All Sessions{% endif %}</p>
+<p><em>Note: session filter applies to votes only. Message and meeting counts reflect the full scope regardless of session.</em></p>
+
+<!-- only show the counts for whatever was ticked when the report was generated -->
+{% if report.include_votes %}<p><strong>Total Votes:</strong> {{ report.total_votes }}</p>{% endif %}
+{% if report.include_messages %}<p><strong>Total Messages:</strong> {{ report.total_messages }}</p>{% endif %}
+{% if report.include_meetings %}<p><strong>Total Meetings:</strong> {{ report.total_meetings }}</p>{% endif %}
+
+</body>
+</html>

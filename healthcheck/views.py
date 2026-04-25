@@ -1,17 +1,20 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from io import BytesIO
 import datetime
 from .forms import MeetingForm, UserUpdateForm
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import (update_session_auth_hash,authenticate,login,logout)
 from django.contrib.auth.models import User
 from .models import Meeting, Department, Team, Message, Dependency, UserProfile, AuditLog
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.contrib import messages
-
+from .models import (Meeting, Department, Team, Message, Dependency, UserProfile, Report, ReportType, Vote, Manager, Session)
 
 # Authentication views
 
@@ -451,3 +454,115 @@ def support_view(request):
             messages.error(request, "Please fill in all fields.")
 
     return render(request, "healthcheck/support.html") 
+
+## report section
+# builds a pdf from the report data using a html template and xhtml2pdf
+def generate_report_pdf(report):
+    html = render_to_string("healthcheck/report_pdf.html", {"report": report})
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    if pdf.err:
+        return None
+    return result.getvalue()
+
+
+# works out how many votes,messages,meetings to show based on what scope and session was picked
+def get_scoped_counts(scope_type, user_id, manager_id, team_id, department_id, session_id):
+    votes = Vote.objects.all()
+    msgs = Message.objects.all()
+    meets = Meeting.objects.all()
+
+    # narrow votes down to a specific session if one was chosen
+    if session_id:
+        votes = votes.filter(session_id=session_id)
+
+    # then filter everything down by whichever scope was selected
+    if scope_type == "user" and user_id:
+        votes = votes.filter(user_id=user_id)
+        msgs = msgs.filter(Q(sender_id=user_id) | Q(receiver_id=user_id))
+        meets = meets.filter(organiser_id=user_id)
+
+    elif scope_type == "manager" and manager_id:
+        votes = votes.filter(team__manager_id=manager_id)
+        msgs = msgs.filter(Q(sender__userprofile__team__manager_id=manager_id) | Q(receiver__userprofile__team__manager_id=manager_id))
+        meets = meets.filter(team__manager_id=manager_id)
+
+    elif scope_type == "team" and team_id:
+        votes = votes.filter(team_id=team_id)
+        msgs = msgs.filter(Q(sender__userprofile__team_id=team_id) | Q(receiver__userprofile__team_id=team_id))
+        meets = meets.filter(team_id=team_id)
+
+    elif scope_type == "department" and department_id:
+        votes = votes.filter(team__department_id=department_id)
+        msgs = msgs.filter(Q(sender__userprofile__team__department_id=department_id) | Q(receiver__userprofile__team__department_id=department_id))
+        meets = meets.filter(team__department_id=department_id)
+
+    return votes.count(), msgs.count(), meets.count()
+
+# handles both generating new reports and exporting existing ones as pdfs
+@login_required(login_url='login')
+def report_view(request):
+    if request.method == "POST":
+        action = request.POST.get("action")
+        title = request.POST.get("title")
+        report_type_name = request.POST.get("report_type")
+        scope_type = request.POST.get("scope_type")
+
+        # if the export button gets clicked, generate and return a pdf straight away
+        if action == "pdf":
+            if not request.user.is_staff:
+                return HttpResponse("Access denied", status=403)
+            report = get_object_or_404(Report, id=request.POST.get("report_id"))
+            pdf_data = generate_report_pdf(report)
+            if not pdf_data:
+                return HttpResponse("Could not generate PDF", status=400)
+            return HttpResponse(pdf_data, content_type="application/pdf")
+
+        # basic checks before we do anything
+        if not title:
+            messages.error(request, "Report title is required")
+            return redirect("report")
+        if not report_type_name:
+            messages.error(request, "Report type is required")
+            return redirect("report")
+
+        # grab all the scope and session selections from the form
+        user_id = request.POST.get("users") or None
+        manager_id = request.POST.get("managers") or None
+        team_id = request.POST.get("teams") or None
+        department_id = request.POST.get("departments") or None
+        session_id = request.POST.get("sessions") or None
+
+        # get the filtered counts based on what was selected
+        total_votes, total_messages, total_meetings = get_scoped_counts(
+            scope_type, user_id, manager_id, team_id, department_id, session_id
+        )
+
+        # create the report type if it doesnt exist yet, otherwise just grab it
+        report_type, _ = ReportType.objects.get_or_create(name=report_type_name)
+
+        # save the report to the database
+        Report.objects.create(
+            title=title, report_type=report_type, scope_type=scope_type,
+            user_id=user_id, manager_id=manager_id, team_id=team_id,
+            department_id=department_id, session_id=session_id,
+            include_votes=bool(request.POST.get("include_votes")),
+            include_messages=bool(request.POST.get("include_messages")),
+            include_meetings=bool(request.POST.get("include_meetings")),
+            total_votes=total_votes, total_messages=total_messages, total_meetings=total_meetings,
+        )
+
+        return redirect("report")
+
+    # on a normal page load, just grab all saved reports and the dropdown data
+    reports = Report.objects.order_by("-created_at")
+
+    return render(request, "healthcheck/report.html", {
+        "reports": reports,
+        "report_types": ReportType.objects.all(),
+        "users": User.objects.all(),
+        "managers": Manager.objects.all(),
+        "teams": Team.objects.all(),
+        "departments": Department.objects.all(),
+        "sessions": Session.objects.all(),
+    })

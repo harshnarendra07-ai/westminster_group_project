@@ -1,4 +1,156 @@
-{% extends 'healthcheck/base.html' %}
-
+{% extends "healthcheck/base.html" %}
 {% block content %}
-{% endblock content %}
+
+<style>
+    .report-box { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+    p { margin-bottom: 12px; }
+    input, select { display: block; width: 300px; margin-bottom: 12px; padding: 10px; border: 1px solid #999; border-radius: 6px; }
+    button { padding: 10px 18px; margin-top: 10px; margin-right: 10px; border: 1px solid #999; border-radius: 6px; cursor: pointer; }
+    .checkbox-group { margin-top: 15px; margin-bottom: 15px; }
+    .checkbox-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .checkbox-item input { width: auto; margin: 0; }
+    .button-group { margin-top: 15px; }
+    .saved-report-actions { margin-top: 15px; margin-bottom: 15px; }
+    .saved-report-actions form { margin: 0; }
+</style>
+
+<div class="report-box">
+    <h2>Reports Dashboard</h2>
+    <p>Generate reports and review saved summaries below.</p>
+
+    <!-- generate new report form -->
+    <div class="report-box">
+        <h3>Generate New Report</h3>
+        <p>To generate a new report please fill out the information below.</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- title and type -->
+            <input type="text" name="title" placeholder="Report Title" required>
+            <p>Please enter a title.</p>
+            <input type="text" name="report_type" list="report-type-list" placeholder="Report Type" required>
+            <p>Enter a new or existing report type.</p>
+            <datalist id="report-type-list">
+                {% for type in report_types %}<option value="{{ type.name }}"></option>{% endfor %}
+            </datalist>
+
+            <!-- scope selection and controls which dropdown appears below -->
+            <select name="scope_type" id="scope_type" onchange="updateScopeFields()" required>
+                <option value="">Select Scope</option>
+                <option value="user">User — Generate a report for a single engineer</option>
+                <option value="manager">Manager — Generate a report covering all teams under a manager</option>
+                <option value="team">Team — Generate a report for a specific team</option>
+                <option value="department">Department — Generate a report across an entire department</option>
+            </select>
+            <p>Choose where the data will come from.</p>
+
+            <!-- only one of these shows at a time depending on scope picked -->
+            <div id="user-field" class="scope-field" hidden>
+                <select name="users">
+                    <option value="">Select User</option>
+                    {% for user in users %}<option value="{{ user.id }}">{{ user.username }}</option>{% endfor %}
+                </select>
+            </div>
+            <div id="manager-field" class="scope-field" hidden>
+                <select name="managers">
+                    <option value="">Select Manager</option>
+                    {% for manager in managers %}<option value="{{ manager.id }}">{{ manager }}</option>{% endfor %}
+                </select>
+            </div>
+            <div id="team-field" class="scope-field" hidden>
+                <select name="teams">
+                    <option value="">Select Team</option>
+                    {% for team in teams %}<option value="{{ team.id }}">{{ team.team_name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div id="department-field" class="scope-field" hidden>
+                <select name="departments">
+                    <option value="">Select Department</option>
+                    {% for department in departments %}<option value="{{ department.id }}">{{ department.dept_name }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <!-- session filter, it only affects vote counts -->
+            <select name="sessions">
+                <option value="">All Sessions</option>
+                {% for session in sessions %}<option value="{{ session.id }}">{{ session.session_name }}</option>{% endfor %}
+            </select>
+            <p>Optionally filter votes by a specific session. This does not affect message or meeting counts.</p>
+
+            <!-- checkboxes to pick what data gets included -->
+            <div class="checkbox-group">
+                <div class="checkbox-item"><input type="checkbox" name="include_votes"><span>Votes — Include the total number of health check votes</span></div>
+                <div class="checkbox-item"><input type="checkbox" name="include_messages"><span>Messages — Include the total number of messages sent and received</span></div>
+                <div class="checkbox-item"><input type="checkbox" name="include_meetings"><span>Meetings — Include the total number of meetings scheduled</span></div>
+            </div>
+            <p>Select what to include in the report.</p>
+
+            <div class="button-group">
+                <button type="submit">Generate Report</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- list of all saved reports -->
+    <div class="report-box">
+        <h3>Saved Reports</h3>
+
+        {% for report in reports %}
+        <div class="report-box">
+
+            <!-- report summary always visible -->
+            <h4>{{ report.title }}</h4>
+            <div><strong>Type:</strong> {{ report.report_type.name }}</div>
+            <div><strong>Created:</strong> {{ report.created_at|date:"d M Y, H:i" }}</div>
+
+            <!-- open report and export pdf buttons -->
+            <div class="saved-report-actions">
+                <button onclick="toggleReport('report-{{ report.id }}')">Open Report</button>
+                {% if request.user.is_staff %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="pdf">
+                    <input type="hidden" name="report_id" value="{{ report.id }}">
+                    <button type="submit">Export PDF</button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- full report details hidden until opened -->
+            <div id="report-{{ report.id }}" hidden>
+                <div><strong>Scope:</strong> {{ report.get_scope_type_display }}</div>
+                {% if report.user %}<div>User: {{ report.user.username }}</div>{% endif %}
+                {% if report.manager %}<div>Manager: {{ report.manager }}</div>{% endif %}
+                {% if report.team %}<div>Team: {{ report.team.team_name }}</div>{% endif %}
+                {% if report.department %}<div>Department: {{ report.department.dept_name }}</div>{% endif %}
+                <div>Vote Session: {% if report.session %}{{ report.session.session_name }}{% else %}All Sessions{% endif %}</div>
+                {% if report.include_votes %}<div>Total Votes: {{ report.total_votes }}</div>{% endif %}
+                {% if report.include_messages %}<div>Total Messages: {{ report.total_messages }}</div>{% endif %}
+                {% if report.include_meetings %}<div>Total Meetings: {{ report.total_meetings }}</div>{% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p>No reports created yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // shows the right dropdown based on whichever scope is selected
+    function updateScopeFields() {
+        let scope = document.getElementById("scope_type").value;
+        document.querySelectorAll(".scope-field").forEach(function(field) { field.hidden = true; });
+        if (scope) { document.getElementById(scope + "-field").hidden = false; }
+    }
+
+    // toggles the full report details open and closed
+    function toggleReport(id) {
+        let section = document.getElementById(id);
+        section.hidden = !section.hidden;
+    }
+
+    window.onload = updateScopeFields;
+</script>
+
+{% endblock %}

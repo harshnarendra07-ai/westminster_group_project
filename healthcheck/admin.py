@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import Department, Manager, Skill, Team, UserProfile, Dependency, Project, Repository, Meeting, Message, AuditLog, Session, HealthCard, Vote
-
+from .models import (Department,Manager,Skill,Team,UserProfile,Dependency,Project,Repository,Meeting,Message,AuditLog,Session,HealthCard,Vote,Report,ReportType)
 
 admin.site.register(Department)
 admin.site.register(Manager)
@@ -16,3 +15,5 @@ admin.site.register(AuditLog)
 admin.site.register(Session)
 admin.site.register(HealthCard)
 admin.site.register(Vote)
+admin.site.register(Report)
+admin.site.register(ReportType)
