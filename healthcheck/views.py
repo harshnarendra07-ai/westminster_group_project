@@ -276,7 +276,7 @@ def message_view(request):
 # This view handles the meeting scheduling, displaying meetings based on the selected filter (today, weekly, monthly), and rendering the schedule page with the appropriate context.
 @login_required(login_url='login') 
 def schedule_view(request):
-    # 1. Check if the user clicked "Edit" (we will pass 'edit=ID' in the URL)
+    # 1. Check if the user clicked "Edit" 
     edit_id = request.GET.get('edit')
     meeting_to_edit = None
     
@@ -284,7 +284,7 @@ def schedule_view(request):
         # Grab the specific meeting they want to edit
         meeting_to_edit = get_object_or_404(Meeting, pk=edit_id, organiser=request.user)
 
-    # 2. Handle the Form Submission (when they click Save/Schedule)
+    # 2. Handle the Form Submission 
     if request.method == "POST":
         if meeting_to_edit:
             # We are saving an EDITED meeting
