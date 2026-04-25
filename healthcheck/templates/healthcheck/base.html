@@ -15,7 +15,7 @@
         }
 
         .sidebar {
-            height: 100vh;
+            min-height: 100vh;
             background-color: #ffffff;
             border-right: 1px solid #dee2e6;
             padding-top: 20px;
@@ -91,6 +91,11 @@
                     class="{% if request.resolver_match.url_name == 'report' %}text-primary{% endif %}">Reports</a>
                 <a href="{% url 'profile' %}"
                     class="{% if request.resolver_match.url_name == 'profile' %}text-primary{% endif %}">Profile</a>
+
+                    {% if user.is_superuser %}
+                    <a href="/admin/" target="_blank" class="text-success fw-bold">Admin Panel</a>
+                {% endif %}
+                
                 <a href="{% url 'logout' %}" class="text-danger fw-bold">Logout</a>
             </div>
             {% endif %}
