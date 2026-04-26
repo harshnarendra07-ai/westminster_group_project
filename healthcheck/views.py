@@ -83,11 +83,15 @@ def dashboard_view(request):
         team_count = Team.objects.filter(department=dept).count()
         values.append(team_count)
 
-    # get next 3 meetings for the user's specific team
-    if hasattr(request.user, 'userprofile') and request.user.userprofile.team:
-        meetings = Meeting.objects.filter(team=request.user.userprofile.team).order_by('date_time')[:3]
+    
+    if request.user.is_superuser:
+        meetings = Meeting.objects.all().order_by('date_time')[:3]
+    elif hasattr(request.user, 'userprofile') and request.user.userprofile.team:
+        meetings = Meeting.objects.filter(
+            Q(team=request.user.userprofile.team) | Q(organiser=request.user)
+        ).order_by('date_time')[:3]
     else:
-        meetings = Meeting.objects.none()
+        meetings = Meeting.objects.filter(organiser=request.user).order_by('date_time')[:3]
 
     # send data to dashboard page
     context = {
