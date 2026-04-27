@@ -97,42 +97,42 @@ def force_import_final():
     )
 
 
-    if repo_url:
-        Repository.objects.update_or_create(
-            repo_url=repo_url,
-            defaults={
-                'team': team
-            }
-        )
+        if repo_url:
+            Repository.objects.update_or_create(
+                repo_url=repo_url,
+                defaults={
+                    'team': team
+                }
+            )
 
-    for i in range(1, 6):
-        safe_team_name = team_name.lower().replace(" ", "_").replace("-", "_")
-        eng_username = f"{safe_team_name}_eng_{i}"
+        for i in range(1, 6):
+            safe_team_name = team_name.lower().replace(" ", "_").replace("-", "_")
+            eng_username = f"{safe_team_name}_eng_{i}"
 
-        eng_user, created = User.objects.get_or_create(username=eng_username)
-        if created or not eng_user.password:
-            eng_user.set_password('skyengineering123')
-            eng_user.save()
+            eng_user, created = User.objects.get_or_create(username=eng_username)
+            if created or not eng_user.password:
+                eng_user.set_password('skyengineering123')
+                eng_user.save()
 
-        UserProfile.objects.update_or_create(
-            user=eng_user,
-            defaults={
-                'role': 'Engineer',
-                'team': team
-            }
-        )
+            UserProfile.objects.update_or_create(
+                user=eng_user,
+                defaults={
+                    'role': 'Engineer',
+                    'team': team
+                }
+            )
 
 
-    skills_str = row.get('Key Skills & Technologies', '')
-    if skills_str:
-        for s in skills_str.split(','):
-            skill_name = s.strip().title()
-            if skill_name:
-                skill_obj, _ = Skill.objects.get_or_create(skill_name=skill_name)
-                team.skills.add(skill_obj)
+        skills_str = row.get('Key Skills & Technologies', '')
+        if skills_str:
+            for s in skills_str.split(','):
+                skill_name = s.strip().title()
+                if skill_name:
+                    skill_obj, _ = Skill.objects.get_or_create(skill_name=skill_name)
+                    team.skills.add(skill_obj)
 
-    print(f" Imported: {team_name}")
-    count += 1
+        print(f" Imported: {team_name}")
+        count += 1
 
     with open(os.path.join(BASE_DIR, file_path), newline='', encoding='latin-1') as f:
         reader = csv.DictReader(f)
