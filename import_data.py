@@ -75,7 +75,7 @@ def force_import_final():
                     'search_keywords': search_terms,
                     'downstream_dependency': downstream,
                     'dependency_type': dep_type,
-                    'team_type': team_type
+                    'team_type': team_type 
                 }
             )
             
